@@ -1,15 +1,18 @@
 # Finlo — Personal Finance Tracker: Development Plan
 
 > **Stack:** .NET 10 Web API · React + TypeScript · SQLite  
-> **Architecture:** Modular Monolith (Feature-based)  
+> **Architecture:** Clean Architecture (Domain → Application → Infrastructure → Api)  
 > **Approach:** API-first, then UI  
 
 ---
 
 ## Current State
 
-- [x] Solution created (`Finlo.slnx`)
-- [x] Web API project scaffolded (`Finlo.Api` — .NET 10, default template)
+- [x] Solution created (`Finlo.slnx`) — projects not yet registered in the solution file
+- [x] Web API project scaffolded (`Finlo.Api` — .NET 10, default template with OpenAPI)
+- [x] Clean Architecture projects created (`Finlo.Domain`, `Finlo.Application`, `Finlo.Infrastructure`)
+- [x] Domain entities created (`Transaction`, `Budget`, `Category`, `TransactionType` enum)
+- [x] Frontend project scaffolded (`client/Finlo.UI` — Vite + React 19 + TypeScript)
 - [ ] Everything below
 
 ---
@@ -20,73 +23,113 @@
 
 ### 1.1 Project Structure & Dependencies
 
-Set up the modular monolith folder structure inside `Finlo.Api`:
+The project uses Clean Architecture with four layers:
 
 ```
-src/Finlo.Api/
-├── Program.cs
-├── Database/
-│   └── AppDbContext.cs
-├── Modules/
-│   ├── Transactions/
-│   │   ├── TransactionController.cs
-│   │   ├── TransactionService.cs
+src/
+├── Finlo.Domain/               ← Entities, enums, domain logic (no dependencies)
+│   ├── Entities/
+│   │   ├── Transaction.cs       ✅ done
+│   │   ├── Budget.cs            ✅ done
+│   │   └── Category.cs          ✅ done
+│   └── Enums/
+│       └── TransactionType.cs   ✅ done
+│
+├── Finlo.Application/          ← DTOs, interfaces, services, business logic
+│   ├── DTOs/
+│   │   ├── Transactions/
+│   │   │   ├── CreateTransactionDto.cs
+│   │   │   ├── UpdateTransactionDto.cs
+│   │   │   └── TransactionResponseDto.cs
+│   │   ├── Budgets/
+│   │   │   ├── CreateBudgetDto.cs
+│   │   │   ├── UpdateBudgetDto.cs
+│   │   │   ├── BudgetResponseDto.cs
+│   │   │   └── BudgetSummaryDto.cs
+│   │   └── Common/
+│   │       ├── PaginationParams.cs
+│   │       └── PagedResult.cs
+│   ├── Interfaces/
+│   │   ├── ITransactionRepository.cs
+│   │   ├── IBudgetRepository.cs
+│   │   └── ICategoryRepository.cs
+│   └── Services/
+│       ├── TransactionService.cs
+│       └── BudgetService.cs
+│
+├── Finlo.Infrastructure/       ← EF Core DbContext, repositories, migrations
+│   ├── Data/
+│   │   └── AppDbContext.cs
+│   ├── Repositories/
 │   │   ├── TransactionRepository.cs
-│   │   ├── Transaction.cs              (entity)
-│   │   └── Dtos/
-│   │       ├── CreateTransactionDto.cs
-│   │       ├── UpdateTransactionDto.cs
-│   │       └── TransactionResponseDto.cs
-│   ├── Budgets/
-│   │   ├── BudgetController.cs
-│   │   ├── BudgetService.cs
 │   │   ├── BudgetRepository.cs
-│   │   ├── Budget.cs                   (entity)
-│   │   └── Dtos/
-│   │       ├── CreateBudgetDto.cs
-│   │       ├── UpdateBudgetDto.cs
-│   │       └── BudgetResponseDto.cs
-│   └── Categories/
-│       ├── Category.cs                 (entity)
-│       └── CategorySeedData.cs
-├── Shared/
-│   ├── Enums/
-│   │   └── TransactionType.cs
-│   └── Pagination/
-│       ├── PaginationParams.cs
-│       └── PagedResult.cs
-└── Migrations/
+│   │   └── CategoryRepository.cs
+│   ├── Seed/
+│   │   └── CategorySeedData.cs
+│   └── Migrations/
+│
+└── Finlo.Api/                  ← Controllers, middleware, DI configuration
+    ├── Program.cs
+    ├── Controllers/
+    │   ├── TransactionsController.cs
+    │   ├── BudgetsController.cs
+    │   └── CategoriesController.cs
+    └── Middleware/
+        └── ExceptionHandlerMiddleware.cs
+```
+
+**Register projects in solution & add project references:**
+
+```bash
+# Add projects to solution file
+dotnet sln Finlo.slnx add src/Finlo.Domain/Finlo.Domain.csproj
+dotnet sln Finlo.slnx add src/Finlo.Application/Finlo.Application.csproj
+dotnet sln Finlo.slnx add src/Finlo.Infrastructure/Finlo.Infrastructure.csproj
+dotnet sln Finlo.slnx add src/Finlo.Api/Finlo.Api.csproj
+
+# Set up project references (Clean Architecture dependency flow)
+dotnet add src/Finlo.Application reference src/Finlo.Domain
+dotnet add src/Finlo.Infrastructure reference src/Finlo.Application
+dotnet add src/Finlo.Api reference src/Finlo.Application
+dotnet add src/Finlo.Api reference src/Finlo.Infrastructure
 ```
 
 **Install NuGet packages:**
 
 ```bash
-dotnet add package Microsoft.EntityFrameworkCore.Sqlite
-dotnet add package Microsoft.EntityFrameworkCore.Design
+# Infrastructure — EF Core + SQLite
+dotnet add src/Finlo.Infrastructure package Microsoft.EntityFrameworkCore.Sqlite
+dotnet add src/Finlo.Infrastructure package Microsoft.EntityFrameworkCore.Design
+
+# Api — EF Core Design tools (for migrations CLI)
+dotnet add src/Finlo.Api package Microsoft.EntityFrameworkCore.Design
 ```
 
 **Tasks:**
 
-- [ ] Remove weather forecast boilerplate from `Program.cs`
-- [ ] Create folder structure above
-- [ ] Add NuGet packages
-- [ ] Add `AddControllers()` to `Program.cs` (replace minimal API setup)
+- [ ] Register all projects in `Finlo.slnx`
+- [ ] Add project references (Domain ← Application ← Infrastructure, Application + Infrastructure ← Api)
+- [ ] Install NuGet packages (EF Core Sqlite, EF Core Design)
+- [ ] Clean up `Program.cs` — add `AddControllers()`, remove any boilerplate
+- [ ] Create folder structure above in Application, Infrastructure, and Api projects
 
 ---
 
 ### 1.2 Domain Entities
 
-**`TransactionType` enum:**
+All domain entities are implemented in `src/Finlo.Domain/`.
+
+**`TransactionType` enum** (`src/Finlo.Domain/Enums/TransactionType.cs`):
 
 ```csharp
 public enum TransactionType
 {
-    Income = 0,
-    Expense = 1
+    Expense = 0,
+    Income = 1
 }
 ```
 
-**`Transaction` entity:**
+**`Transaction` entity** (`src/Finlo.Domain/Entities/Transaction.cs`):
 
 | Property    | Type              | Notes                       |
 |-------------|-------------------|-----------------------------|
@@ -99,7 +142,7 @@ public enum TransactionType
 | CreatedAt   | `DateTime`        | Auto-set on creation         |
 | UpdatedAt   | `DateTime?`       | Auto-set on update           |
 
-**`Budget` entity:**
+**`Budget` entity** (`src/Finlo.Domain/Entities/Budget.cs`):
 
 | Property  | Type      | Notes                          |
 |-----------|-----------|--------------------------------|
@@ -110,7 +153,7 @@ public enum TransactionType
 | Year      | `int`     | e.g. 2026                      |
 | CreatedAt | `DateTime`| Auto-set                       |
 
-**`Category` entity (optional, seed data):**
+**`Category` entity** (`src/Finlo.Domain/Entities/Category.cs`):
 
 | Property | Type              | Notes       |
 |----------|-------------------|-------------|
@@ -120,22 +163,22 @@ public enum TransactionType
 
 **Tasks:**
 
-- [ ] Create `TransactionType.cs` enum
-- [ ] Create `Transaction.cs` entity
-- [ ] Create `Budget.cs` entity
-- [ ] Create `Category.cs` entity
+- [x] Create `TransactionType.cs` enum
+- [x] Create `Transaction.cs` entity
+- [x] Create `Budget.cs` entity
+- [x] Create `Category.cs` entity
 
 ---
 
 ### 1.3 Database (EF Core + SQLite)
 
-**`AppDbContext`:**
+**`AppDbContext`** (in `src/Finlo.Infrastructure/Data/AppDbContext.cs`):
 
 - DbSet\<Transaction\>, DbSet\<Budget\>, DbSet\<Category\>
 - Configure indexes: `Date`, `Category`, composite `(Month, Year)` on Budgets
 - Seed default categories (Food, Transport, Utilities, Salary, Entertainment, Health, Shopping, Other)
 
-**Connection string** (`appsettings.json`):
+**Connection string** (`src/Finlo.Api/appsettings.json`):
 
 ```json
 "ConnectionStrings": {
@@ -145,12 +188,12 @@ public enum TransactionType
 
 **Tasks:**
 
-- [ ] Create `AppDbContext.cs` with entity configurations
+- [ ] Create `AppDbContext.cs` in `Finlo.Infrastructure/Data/` with entity configurations
 - [ ] Add connection string to `appsettings.json`
-- [ ] Register DbContext in `Program.cs`
-- [ ] Create initial migration: `dotnet ef migrations add InitialCreate`
-- [ ] Apply migration: `dotnet ef database update`
-- [ ] Seed default categories
+- [ ] Register DbContext in `Finlo.Api/Program.cs`
+- [ ] Create initial migration: `dotnet ef migrations add InitialCreate --project src/Finlo.Infrastructure --startup-project src/Finlo.Api`
+- [ ] Apply migration: `dotnet ef database update --startup-project src/Finlo.Api`
+- [ ] Seed default categories via `Finlo.Infrastructure/Seed/CategorySeedData.cs`
 
 ---
 
@@ -175,20 +218,22 @@ public enum TransactionType
 - `startDate` / `endDate` (optional)
 - `search` (searches Notes field, optional)
 
-**Layers:**
+**Layers (Clean Architecture):**
 
-1. **Controller** — Route handling, validation, returns DTOs
-2. **Service** — Business logic, mapping entity ↔ DTO
-3. **Repository** — EF Core queries
+1. **Controller** (`Finlo.Api/Controllers/`) — Route handling, returns DTOs
+2. **Service** (`Finlo.Application/Services/`) — Business logic, mapping entity ↔ DTO
+3. **Repository Interface** (`Finlo.Application/Interfaces/`) — Contracts for data access
+4. **Repository** (`Finlo.Infrastructure/Repositories/`) — EF Core queries
 
 **Tasks:**
 
-- [ ] Create DTOs: `CreateTransactionDto`, `UpdateTransactionDto`, `TransactionResponseDto`
-- [ ] Create `PaginationParams` and `PagedResult<T>`
-- [ ] Create `TransactionRepository` (CRUD + filtered query)
-- [ ] Create `TransactionService` (mapping + validation)
-- [ ] Create `TransactionController` (endpoints)
-- [ ] Register services in DI (`Program.cs`)
+- [ ] Create DTOs in `Finlo.Application/DTOs/Transactions/`: `CreateTransactionDto`, `UpdateTransactionDto`, `TransactionResponseDto`
+- [ ] Create `PaginationParams` and `PagedResult<T>` in `Finlo.Application/DTOs/Common/`
+- [ ] Create `ITransactionRepository` interface in `Finlo.Application/Interfaces/`
+- [ ] Create `TransactionRepository` in `Finlo.Infrastructure/Repositories/` (CRUD + filtered query)
+- [ ] Create `TransactionService` in `Finlo.Application/Services/` (mapping + validation)
+- [ ] Create `TransactionsController` in `Finlo.Api/Controllers/` (endpoints)
+- [ ] Register services in DI (`Finlo.Api/Program.cs`)
 - [ ] Test all endpoints manually (use `.http` file or Swagger)
 
 ---
@@ -228,10 +273,11 @@ public enum TransactionType
 
 **Tasks:**
 
-- [ ] Create DTOs: `CreateBudgetDto`, `UpdateBudgetDto`, `BudgetResponseDto`, `BudgetSummaryDto`
-- [ ] Create `BudgetRepository`
-- [ ] Create `BudgetService` (includes summary calculation — queries Transactions table)
-- [ ] Create `BudgetController`
+- [ ] Create DTOs in `Finlo.Application/DTOs/Budgets/`: `CreateBudgetDto`, `UpdateBudgetDto`, `BudgetResponseDto`, `BudgetSummaryDto`
+- [ ] Create `IBudgetRepository` interface in `Finlo.Application/Interfaces/`
+- [ ] Create `BudgetRepository` in `Finlo.Infrastructure/Repositories/`
+- [ ] Create `BudgetService` in `Finlo.Application/Services/` (includes summary calculation — queries Transactions via repository)
+- [ ] Create `BudgetsController` in `Finlo.Api/Controllers/`
 - [ ] Register services in DI
 - [ ] Test all endpoints
 
@@ -247,20 +293,22 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 
 **Tasks:**
 
-- [ ] Create `CategoriesController` (single GET endpoint)
+- [ ] Create `ICategoryRepository` interface in `Finlo.Application/Interfaces/`
+- [ ] Create `CategoryRepository` in `Finlo.Infrastructure/Repositories/`
+- [ ] Create `CategoriesController` in `Finlo.Api/Controllers/` (single GET endpoint)
 - [ ] Test endpoint
 
 ---
 
 ### 1.7 Validation & Error Handling
 
-- [ ] Add `FluentValidation` or use Data Annotations on DTOs
+- [ ] Add `FluentValidation` or use Data Annotations on DTOs (in `Finlo.Application`)
   - Amount > 0
   - Category required
   - Date required
   - Budget Limit > 0
   - Month 1–12
-- [ ] Create global exception handler middleware
+- [ ] Create global exception handler middleware in `Finlo.Api/Middleware/`
 - [ ] Return consistent error response shape:
 
 ```json
@@ -338,10 +386,11 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 
 **Tasks:**
 
-- [ ] Create `ReportsModule/` folder structure
-- [ ] Create `ReportService` (aggregate queries against Transactions)
-- [ ] Create `ReportsController`
-- [ ] Create response DTOs
+- [ ] Create `Finlo.Application/DTOs/Reports/` with response DTOs
+- [ ] Create `Finlo.Application/Interfaces/IReportRepository.cs`
+- [ ] Create `ReportService` in `Finlo.Application/Services/` (aggregate queries against Transactions)
+- [ ] Create `ReportRepository` in `Finlo.Infrastructure/Repositories/`
+- [ ] Create `ReportsController` in `Finlo.Api/Controllers/`
 - [ ] Test all report endpoints with sample data
 
 ---
@@ -361,16 +410,12 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 
 ### 3.1 Project Setup
 
-```bash
-# From repo root
-npx create-vite@latest finlo-web --template react-ts
-cd finlo-web
-npm install
-```
+The React + TypeScript project is already scaffolded at `client/Finlo.UI/` (Vite + React 19 + TypeScript).
 
 **Install key dependencies:**
 
 ```bash
+cd client/Finlo.UI
 npm install axios react-router-dom zustand recharts
 npm install -D tailwindcss @tailwindcss/vite
 ```
@@ -378,7 +423,7 @@ npm install -D tailwindcss @tailwindcss/vite
 **Folder structure:**
 
 ```
-src/finlo-web/
+client/Finlo.UI/
 ├── src/
 │   ├── App.tsx
 │   ├── main.tsx
@@ -416,7 +461,7 @@ src/finlo-web/
 
 **Tasks:**
 
-- [ ] Scaffold Vite + React + TS project
+- [x] Scaffold Vite + React + TS project (`client/Finlo.UI/`)
 - [ ] Install dependencies (axios, router, zustand, recharts, tailwind)
 - [ ] Set up Tailwind CSS
 - [ ] Create folder structure
@@ -525,22 +570,25 @@ src/finlo-web/
 
 ```bash
 # Add migration
-dotnet ef migrations add <Name> --project src/Finlo.Api
+dotnet ef migrations add <Name> --project src/Finlo.Infrastructure --startup-project src/Finlo.Api
 
 # Apply migrations
-dotnet ef database update --project src/Finlo.Api
+dotnet ef database update --startup-project src/Finlo.Api
 
 # Remove last migration (if not applied)
-dotnet ef migrations remove --project src/Finlo.Api
+dotnet ef migrations remove --project src/Finlo.Infrastructure --startup-project src/Finlo.Api
 ```
 
 ### Dev Workflow
 
 ```bash
-# Run API (from src/Finlo.Api)
-dotnet watch run
+# Run API (from repo root)
+dotnet run --project src/Finlo.Api
 
-# Run Frontend (from src/finlo-web)
+# Run API with watch (from repo root)
+dotnet watch run --project src/Finlo.Api
+
+# Run Frontend (from client/Finlo.UI)
 npm run dev
 ```
 
@@ -565,17 +613,17 @@ main          ← stable releases
 This is the exact order to build, task by task:
 
 ```
- 1. [Phase 1.1] Project structure + packages
- 2. [Phase 1.2] Domain entities + enum
- 3. [Phase 1.3] DbContext + SQLite + migration + seed
- 4. [Phase 1.4] Transactions CRUD (repo → service → controller)
+ 1. [Phase 1.1] Solution registration + project references + NuGet packages
+ 2. [Phase 1.2] Domain entities + enum                    ✅ DONE
+ 3. [Phase 1.3] AppDbContext (Infrastructure) + SQLite + migration + seed
+ 4. [Phase 1.4] Transactions CRUD (interfaces/DTOs → repo → service → controller)
  5. [Phase 1.5] Budgets CRUD + summary endpoint
  6. [Phase 1.6] Categories endpoint
  7. [Phase 1.7] Validation + error handling
  8. [Phase 1.8] ✅ Verify all API endpoints
  9. [Phase 2.1] Reports endpoints
 10. [Phase 2.2] ✅ Verify reports
-11. [Phase 3.1] Frontend scaffold + routing + layout
+11. [Phase 3.1] Frontend deps + routing + layout           (scaffold ✅ DONE)
 12. [Phase 3.2] Transactions UI
 13. [Phase 3.3] Budgets UI
 14. [Phase 3.4] Dashboard
@@ -585,6 +633,4 @@ This is the exact order to build, task by task:
 18. [Phase 5]   Advanced features
 ```
 
----
-
-*Start with step 1. Build one thing at a time. Test before moving on.*
+**Next up: Step 1 — register projects in solution, wire up references, install packages.**
