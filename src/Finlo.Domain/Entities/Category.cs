@@ -1,3 +1,5 @@
+using Finlo.Domain.Enums;
+
 namespace Finlo.Domain.Entities;
 
 public class Category
