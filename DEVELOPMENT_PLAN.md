@@ -80,7 +80,7 @@ src/
 │   │   ├── BudgetRepository.cs
 │   │   └── CategoryRepository.cs
 │   └── Seed/
-│       └── CategorySeedData.cs  (unused — seeding done via scripts/SeedDatabase.ps1 instead)
+│       └── CategorySeedData.cs  ← EF Core HasData seed (8 default categories)
 │
 └── Finlo.Api/                  ← Minimal API endpoints, middleware, DI configuration
     ├── Program.cs               ✅ done (endpoint scanning + Infrastructure DI)
@@ -227,291 +227,93 @@ public enum TransactionType
 - [X] Apply migration (`finlo.db` database file created)
 - [X] Create entity configurations (`BudgetConfiguration`, `CategoryConfiguration`, `TransactionConfiguration` in `Data/Configurations/`)
 - [ ] Add indexes to configurations: `Date` + `Category` on Transactions, composite `(Month, Year)` on Budgets
-- [ ] Implement seed data SQL files + PowerShell seed script — see [Phase 1.3a](#13a-database-seeding) below
-- [ ] Create new migration to apply configuration changes (indexes, max lengths, column types) to database
+- [ ] Implement seed data via EF Core `HasData` in `CategoryConfiguration` — see [Phase 1.3a](#13a-database-seeding) below
+- [ ] Create new migration to apply configuration changes (indexes, seed data, max lengths, column types) to database
 
 ---
 
 ### 1.3a Database Seeding
 
-**Goal:** Seed the SQLite database with default data using SQL files and a PowerShell script.
-Instead of seeding in C# code on startup, we keep seed data as plain `.sql` files (easy to read, edit, version-control)
-and run them via a `SeedDatabase.ps1` script whenever needed.
+**Goal:** Seed the SQLite database with default categories using EF Core's `HasData` in entity configurations.
+Seed data is defined in C# and applied automatically via EF Core migrations — no external tools required.
 
-#### Folder structure
+#### How it works
 
 ```
-scripts/
-├── SeedDatabase.ps1              ← Main script (import/clear seed data)
-└── seed_data/
-    ├── Categories.sql            ← INSERT statements for default categories
-    └── (future: Budgets.sql, Transactions.sql, etc.)
+src/Finlo.Infrastructure/
+├── Seed/
+│   └── CategorySeedData.cs       ← static list of 8 default categories
+└── Data/
+    └── Configurations/
+        └── CategoryConfiguration.cs  ← calls builder.HasData(CategorySeedData.GetCategories())
 ```
 
-#### Step 1 — Create seed SQL files
+1. `CategorySeedData.GetCategories()` returns the 8 default `Category` entities with fixed GUIDs
+2. `CategoryConfiguration.Configure()` calls `builder.HasData(...)` to register them with EF Core
+3. EF Core generates `InsertData` statements in the migration, applied on `dotnet ef database update`
 
-Create `scripts/seed_data/Categories.sql`:
+#### Step 1 — Create `CategorySeedData.cs`
 
-```sql
--- Default categories for Finlo
--- This file is idempotent: uses INSERT OR IGNORE so re-running won't duplicate rows.
+Create `src/Finlo.Infrastructure/Seed/CategorySeedData.cs`:
 
-INSERT OR IGNORE INTO Categories (Id, Name, Type) VALUES ('a1b2c3d4-0001-0000-0000-000000000001', 'Food', 0);
-INSERT OR IGNORE INTO Categories (Id, Name, Type) VALUES ('a1b2c3d4-0002-0000-0000-000000000002', 'Transport', 0);
-INSERT OR IGNORE INTO Categories (Id, Name, Type) VALUES ('a1b2c3d4-0003-0000-0000-000000000003', 'Utilities', 0);
-INSERT OR IGNORE INTO Categories (Id, Name, Type) VALUES ('a1b2c3d4-0004-0000-0000-000000000004', 'Entertainment', 0);
-INSERT OR IGNORE INTO Categories (Id, Name, Type) VALUES ('a1b2c3d4-0005-0000-0000-000000000005', 'Health', 0);
-INSERT OR IGNORE INTO Categories (Id, Name, Type) VALUES ('a1b2c3d4-0006-0000-0000-000000000006', 'Shopping', 0);
-INSERT OR IGNORE INTO Categories (Id, Name, Type) VALUES ('a1b2c3d4-0007-0000-0000-000000000007', 'Salary', 1);
-INSERT OR IGNORE INTO Categories (Id, Name, Type) VALUES ('a1b2c3d4-0008-0000-0000-000000000008', 'Other', 0);
+```csharp
+public static class CategorySeedData
+{
+    public static Category[] GetCategories() =>
+    [
+        new() { Id = Guid.Parse("a1b2c3d4-0001-0000-0000-000000000001"), Name = "Food", Type = TransactionType.Expense },
+        new() { Id = Guid.Parse("a1b2c3d4-0002-0000-0000-000000000002"), Name = "Transport", Type = TransactionType.Expense },
+        new() { Id = Guid.Parse("a1b2c3d4-0003-0000-0000-000000000003"), Name = "Utilities", Type = TransactionType.Expense },
+        new() { Id = Guid.Parse("a1b2c3d4-0004-0000-0000-000000000004"), Name = "Entertainment", Type = TransactionType.Expense },
+        new() { Id = Guid.Parse("a1b2c3d4-0005-0000-0000-000000000005"), Name = "Health", Type = TransactionType.Expense },
+        new() { Id = Guid.Parse("a1b2c3d4-0006-0000-0000-000000000006"), Name = "Shopping", Type = TransactionType.Expense },
+        new() { Id = Guid.Parse("a1b2c3d4-0007-0000-0000-000000000007"), Name = "Salary", Type = TransactionType.Income },
+        new() { Id = Guid.Parse("a1b2c3d4-0008-0000-0000-000000000008"), Name = "Other", Type = TransactionType.Expense },
+    ];
+}
 ```
 
-> **Why `INSERT OR IGNORE`?** SQLite skips the insert if the primary key already exists.
-> This makes the script safe to run multiple times without duplicating data.
->
-> **Why `Type = 0` / `Type = 1`?** The `TransactionType` enum stores as integer in SQLite:
-> `Expense = 0`, `Income = 1`.
+> **Why fixed GUIDs?** EF Core `HasData` requires stable primary keys so migrations can detect
+> additions/changes. Random GUIDs would create duplicate insert migrations every time.
 
-#### Step 2 — Create `SeedDatabase.ps1`
+#### Step 2 — Wire up in `CategoryConfiguration.cs`
 
-Create `scripts/SeedDatabase.ps1`:
+Add `builder.HasData(CategorySeedData.GetCategories())` at the end of `Configure()`:
 
-```powershell
-<#
-.SYNOPSIS
-    Seeds the Finlo SQLite database with initial data from SQL files.
-.DESCRIPTION
-    Reads .sql files from the seed_data/ folder and executes them against the SQLite database.
-    Supports importing specific tables, clearing tables before import, or listing available seed files.
-.EXAMPLE
-    .\scripts\SeedDatabase.ps1                          # Seed all tables (interactive)
-    .\scripts\SeedDatabase.ps1 -Tables Categories       # Seed only Categories
-    .\scripts\SeedDatabase.ps1 -Tables "*"              # Seed all tables (no prompt)
-    .\scripts\SeedDatabase.ps1 -Mode clear -Tables "*"  # Clear all seeded tables
-    .\scripts\SeedDatabase.ps1 -Mode list               # List available seed files
-#>
-param(
-    # What to do: 'import' seeds data, 'clear' deletes data, 'list' shows available tables.
-    [ValidateSet("import", "clear", "list")]
-    [string]$Mode = "import",
-
-    # Comma-separated table names to seed (must match filenames in seed_data/ without .sql extension).
-    # Use "*" to select all. If omitted, you'll be prompted interactively.
-    [string]$Tables = $null,
-
-    # Path to the SQLite database file.
-    [string]$Database = $null
-)
-
-$ErrorActionPreference = "Stop"
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$SeedDataDir = Join-Path $ScriptDir "seed_data"
-
-##############################
-# Auto-detect database path
-##############################
-
-if (-not $Database) {
-    # Default: look for finlo.db relative to repo root
-    $RepoRoot = Split-Path -Parent $ScriptDir
-    $Database = Join-Path $RepoRoot "src/Finlo.Api/finlo.db"
+```csharp
+public void Configure(EntityTypeBuilder<Category> builder)
+{
+    // ... existing config ...
+    builder.HasData(CategorySeedData.GetCategories());
 }
-
-if (-not (Test-Path $Database)) {
-    Write-Host "Database not found at: $Database" -ForegroundColor Red
-    Write-Host "Run the API first to create the database: dotnet run --project src/Finlo.Api" -ForegroundColor Yellow
-    exit 1
-}
-
-##############################
-# Discover available seed files
-##############################
-
-$availableSeedFiles = Get-ChildItem -Path $SeedDataDir -Filter "*.sql" -ErrorAction SilentlyContinue |
-    Sort-Object Name |
-    ForEach-Object { $_.BaseName }
-
-if ($availableSeedFiles.Count -eq 0) {
-    Write-Host "No .sql seed files found in: $SeedDataDir" -ForegroundColor Red
-    exit 1
-}
-
-##############################
-# List mode
-##############################
-
-if ($Mode -eq "list") {
-    Write-Host "Available seed files in $SeedDataDir :" -ForegroundColor Cyan
-    $i = 1
-    $availableSeedFiles | ForEach-Object {
-        Write-Host "  $i) $_" -ForegroundColor White
-        $i++
-    }
-    exit 0
-}
-
-##############################
-# Resolve which tables to use
-##############################
-
-function Get-TablesToUse {
-    if ($Tables) {
-        if ($Tables -eq "*") {
-            return $availableSeedFiles
-        }
-        $requested = $Tables -split ',\s*'
-        foreach ($t in $requested) {
-            if (-not ($availableSeedFiles -contains $t)) {
-                Write-Host "Seed file not found: '$t'. Available:" -ForegroundColor Red
-                $availableSeedFiles | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
-                exit 1
-            }
-        }
-        return $requested
-    }
-    else {
-        # Interactive prompt
-        Write-Host "Select tables to $Mode :" -ForegroundColor Cyan
-        $i = 1
-        $availableSeedFiles | ForEach-Object {
-            Write-Host "  $i) $_" -ForegroundColor White
-            $i++
-        }
-        Write-Host "Enter numbers separated by commas (e.g. 1,2) or '*' for all: " -ForegroundColor Yellow -NoNewline
-        $response = Read-Host
-        if ($response.Trim() -eq "") {
-            Write-Host "No input. Exiting." -ForegroundColor Red
-            exit 1
-        }
-        if ($response.Trim() -eq "*") {
-            return $availableSeedFiles
-        }
-        $indexes = $response.Trim() -split ',\s*' -as [int[]]
-        return $indexes | ForEach-Object { $availableSeedFiles[$_ - 1] }
-    }
-}
-
-$tablesToUse = Get-TablesToUse
-
-##############################
-# Summary
-##############################
-
-Write-Host ""
-Write-Host "///////////////// SeedDatabase.ps1 /////////////////" -ForegroundColor Cyan
-Write-Host "// Mode: $Mode" -ForegroundColor Cyan
-Write-Host "// Database: $Database" -ForegroundColor Cyan
-Write-Host "// Tables:" -ForegroundColor Cyan
-$tablesToUse | ForEach-Object { Write-Host "//   - $_" -ForegroundColor Cyan }
-Write-Host "////////////////////////////////////////////////////" -ForegroundColor Cyan
-Write-Host ""
-
-##############################
-# Confirm destructive operations
-##############################
-
-if ($Mode -eq "clear") {
-    Write-Host "WARNING: This will DELETE all data from the selected tables." -ForegroundColor Red
-    Write-Host "Continue? (y/N) " -ForegroundColor Yellow -NoNewline
-    $response = Read-Host
-    if ($response -ne "Y" -and $response -ne "y") {
-        Write-Host "Cancelled." -ForegroundColor Red
-        exit 0
-    }
-}
-
-##############################
-# Execute
-##############################
-
-foreach ($table in $tablesToUse) {
-    if ($Mode -eq "import") {
-        $sqlFile = Join-Path $SeedDataDir "$table.sql"
-        Write-Host "Seeding $table ..." -ForegroundColor Gray
-        sqlite3 $Database ".read $sqlFile"
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "  FAILED to seed $table" -ForegroundColor Red
-            exit 1
-        }
-        Write-Host "  $table seeded." -ForegroundColor Green
-    }
-    elseif ($Mode -eq "clear") {
-        Write-Host "Clearing $table ..." -ForegroundColor Gray
-        sqlite3 $Database "DELETE FROM $table;"
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "  FAILED to clear $table" -ForegroundColor Red
-            exit 1
-        }
-        Write-Host "  $table cleared." -ForegroundColor Green
-    }
-}
-
-Write-Host ""
-Write-Host "Seed $Mode completed successfully." -ForegroundColor Green
 ```
 
-> **Prerequisite:** This script requires `sqlite3` CLI. Install it:
-> ```powershell
-> winget install SQLite.SQLite
-> ```
-> After installation, restart your terminal so `sqlite3` is on your PATH.
-
-#### Step 3 — Apply migrations first
-
-Before seeding, the database must have the tables. Either:
-- Run the API once (`dotnet run --project src/Finlo.Api`) — if you've wired auto-migration in `Program.cs`, or
-- Run EF Core migrations manually:
+#### Step 3 — Create and apply migration
 
 ```bash
+# Create migration
+dotnet ef migrations add SeedDefaultCategories --project src/Finlo.Infrastructure --startup-project src/Finlo.Api
+
+# Apply to database
 dotnet ef database update --project src/Finlo.Infrastructure --startup-project src/Finlo.Api
 ```
 
-#### Step 4 — Run the seed script
-
-```powershell
-# See what seed files are available
-.\scripts\SeedDatabase.ps1 -Mode list
-
-# Seed all tables (no prompt)
-.\scripts\SeedDatabase.ps1 -Tables "*"
-
-# Seed just Categories
-.\scripts\SeedDatabase.ps1 -Tables Categories
-
-# Interactive mode (prompts you to pick)
-.\scripts\SeedDatabase.ps1
-
-# Clear all seeded data
-.\scripts\SeedDatabase.ps1 -Mode clear -Tables "*"
-```
-
-#### Step 5 — Verify
-
-```powershell
-# Check the data was inserted
-sqlite3 src/Finlo.Api/finlo.db "SELECT * FROM Categories;"
-```
-
-You should see 8 rows (Food, Transport, Utilities, Entertainment, Health, Shopping, Salary, Other).
-
 #### Adding more seed data later
 
-To seed a new table (e.g., sample Transactions for development):
+To seed a new table (e.g., default Budgets):
 
-1. Create `scripts/seed_data/Transactions.sql` with `INSERT OR IGNORE` statements
-2. Run `.\scripts\SeedDatabase.ps1 -Tables Transactions`
-
-The script auto-discovers any `.sql` file in `seed_data/`.
+1. Create `src/Finlo.Infrastructure/Seed/BudgetSeedData.cs` with a static method returning entities
+2. Call `builder.HasData(BudgetSeedData.GetBudgets())` in `BudgetConfiguration.cs`
+3. Create a new migration: `dotnet ef migrations add SeedDefaultBudgets ...`
+4. Apply: `dotnet ef database update ...`
 
 **Tasks:**
 
-- [ ] Install `sqlite3` CLI: `winget install SQLite.SQLite` (restart terminal after)
-- [ ] Create `scripts/seed_data/` folder
-- [ ] Create `scripts/seed_data/Categories.sql` with 8 default category INSERT statements
-- [ ] Create `scripts/SeedDatabase.ps1` with import/clear/list modes
-- [ ] Run `dotnet ef database update --project src/Finlo.Infrastructure --startup-project src/Finlo.Api` to ensure tables exist
-- [ ] Run `.\scripts\SeedDatabase.ps1 -Tables "*"` to seed
-- [ ] Run `sqlite3 src/Finlo.Api/finlo.db "SELECT * FROM Categories;"` to verify 8 rows
+- [ ] Implement `CategorySeedData.cs` with 8 default category entities
+- [ ] Add `builder.HasData(CategorySeedData.GetCategories())` to `CategoryConfiguration.cs`
+- [ ] Create migration: `dotnet ef migrations add SeedDefaultCategories --project src/Finlo.Infrastructure --startup-project src/Finlo.Api`
+- [ ] Apply migration: `dotnet ef database update --project src/Finlo.Infrastructure --startup-project src/Finlo.Api`
+- [ ] Verify 8 rows in Categories table
 
 ---
 
