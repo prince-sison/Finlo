@@ -9,7 +9,7 @@
 ## Current State
 
 - [x] Solution created (`Finlo.slnx`) — projects not yet registered in the solution file
-- [x] Web API project scaffolded (`Finlo.Api` — .NET 10, default template with OpenAPI)
+- [x] Web API project scaffolded (`Finlo.Api` — .NET 10, Minimal APIs with OpenAPI)
 - [x] Clean Architecture projects created (`Finlo.Domain`, `Finlo.Application`, `Finlo.Infrastructure`)
 - [x] Domain entities created (`Transaction`, `Budget`, `Category`, `TransactionType` enum)
 - [x] Frontend project scaffolded (`client/Finlo.UI` — Vite + React 19 + TypeScript)
@@ -68,12 +68,12 @@ src/
 │   │   └── CategorySeedData.cs
 │   └── Migrations/
 │
-└── Finlo.Api/                  ← Controllers, middleware, DI configuration
+└── Finlo.Api/                  ← Minimal API endpoints, middleware, DI configuration
     ├── Program.cs
-    ├── Controllers/
-    │   ├── TransactionsController.cs
-    │   ├── BudgetsController.cs
-    │   └── CategoriesController.cs
+    ├── Endpoints/
+    │   ├── TransactionEndpoints.cs
+    │   ├── BudgetEndpoints.cs
+    │   └── CategoryEndpoints.cs
     └── Middleware/
         └── ExceptionHandlerMiddleware.cs
 ```
@@ -107,10 +107,10 @@ dotnet add src/Finlo.Api package Microsoft.EntityFrameworkCore.Design
 
 **Tasks:**
 
-- [ ] Register all projects in `Finlo.slnx`
-- [ ] Add project references (Domain ← Application ← Infrastructure, Application + Infrastructure ← Api)
-- [ ] Install NuGet packages (EF Core Sqlite, EF Core Design)
-- [ ] Clean up `Program.cs` — add `AddControllers()`, remove any boilerplate
+- [X] Register all projects in `Finlo.slnx`
+- [X] Add project references (Domain ← Application ← Infrastructure, Application + Infrastructure ← Api)
+- [X] Install NuGet packages (EF Core Sqlite, EF Core Design)
+- [ ] Clean up `Program.cs` — configure minimal API services, remove any boilerplate
 - [ ] Create folder structure above in Application, Infrastructure, and Api projects
 
 ---
@@ -220,7 +220,7 @@ public enum TransactionType
 
 **Layers (Clean Architecture):**
 
-1. **Controller** (`Finlo.Api/Controllers/`) — Route handling, returns DTOs
+1. **Endpoints** (`Finlo.Api/Endpoints/`) — Minimal API route groups, returns DTOs
 2. **Service** (`Finlo.Application/Services/`) — Business logic, mapping entity ↔ DTO
 3. **Repository Interface** (`Finlo.Application/Interfaces/`) — Contracts for data access
 4. **Repository** (`Finlo.Infrastructure/Repositories/`) — EF Core queries
@@ -232,8 +232,8 @@ public enum TransactionType
 - [ ] Create `ITransactionRepository` interface in `Finlo.Application/Interfaces/`
 - [ ] Create `TransactionRepository` in `Finlo.Infrastructure/Repositories/` (CRUD + filtered query)
 - [ ] Create `TransactionService` in `Finlo.Application/Services/` (mapping + validation)
-- [ ] Create `TransactionsController` in `Finlo.Api/Controllers/` (endpoints)
-- [ ] Register services in DI (`Finlo.Api/Program.cs`)
+- [ ] Create `TransactionEndpoints` in `Finlo.Api/Endpoints/` (minimal API route group)
+- [ ] Register services in DI and map endpoints in `Finlo.Api/Program.cs`
 - [ ] Test all endpoints manually (use `.http` file or Swagger)
 
 ---
@@ -277,8 +277,8 @@ public enum TransactionType
 - [ ] Create `IBudgetRepository` interface in `Finlo.Application/Interfaces/`
 - [ ] Create `BudgetRepository` in `Finlo.Infrastructure/Repositories/`
 - [ ] Create `BudgetService` in `Finlo.Application/Services/` (includes summary calculation — queries Transactions via repository)
-- [ ] Create `BudgetsController` in `Finlo.Api/Controllers/`
-- [ ] Register services in DI
+- [ ] Create `BudgetEndpoints` in `Finlo.Api/Endpoints/` (minimal API route group)
+- [ ] Register services in DI and map endpoints
 - [ ] Test all endpoints
 
 ---
@@ -295,7 +295,7 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 
 - [ ] Create `ICategoryRepository` interface in `Finlo.Application/Interfaces/`
 - [ ] Create `CategoryRepository` in `Finlo.Infrastructure/Repositories/`
-- [ ] Create `CategoriesController` in `Finlo.Api/Controllers/` (single GET endpoint)
+- [ ] Create `CategoryEndpoints` in `Finlo.Api/Endpoints/` (single GET route)
 - [ ] Test endpoint
 
 ---
@@ -390,7 +390,7 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 - [ ] Create `Finlo.Application/Interfaces/IReportRepository.cs`
 - [ ] Create `ReportService` in `Finlo.Application/Services/` (aggregate queries against Transactions)
 - [ ] Create `ReportRepository` in `Finlo.Infrastructure/Repositories/`
-- [ ] Create `ReportsController` in `Finlo.Api/Controllers/`
+- [ ] Create `ReportEndpoints` in `Finlo.Api/Endpoints/` (minimal API route group)
 - [ ] Test all report endpoints with sample data
 
 ---
@@ -616,7 +616,7 @@ This is the exact order to build, task by task:
  1. [Phase 1.1] Solution registration + project references + NuGet packages
  2. [Phase 1.2] Domain entities + enum                    ✅ DONE
  3. [Phase 1.3] AppDbContext (Infrastructure) + SQLite + migration + seed
- 4. [Phase 1.4] Transactions CRUD (interfaces/DTOs → repo → service → controller)
+ 4. [Phase 1.4] Transactions CRUD (interfaces/DTOs → repo → service → endpoints)
  5. [Phase 1.5] Budgets CRUD + summary endpoint
  6. [Phase 1.6] Categories endpoint
  7. [Phase 1.7] Validation + error handling
