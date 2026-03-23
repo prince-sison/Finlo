@@ -8,10 +8,18 @@
 
 ## Current State
 
-- [x] Solution created (`Finlo.slnx`) — projects not yet registered in the solution file
+- [x] Solution created (`Finlo.slnx`) with all 4 projects registered
 - [x] Web API project scaffolded (`Finlo.Api` — .NET 10, Minimal APIs with OpenAPI)
 - [x] Clean Architecture projects created (`Finlo.Domain`, `Finlo.Application`, `Finlo.Infrastructure`)
+- [x] Project references wired up (Domain ← Application ← Infrastructure, Application + Infrastructure ← Api)
+- [x] NuGet packages installed (EF Core Sqlite + Design in Infrastructure; EF Core, OpenApi, EF Core Design in Api)
 - [x] Domain entities created (`Transaction`, `Budget`, `Category`, `TransactionType` enum)
+- [x] Minimal API endpoint pattern established (`IEndpoint` interface + assembly-scanning registration)
+- [x] EF Core `AppDbContext` created with DbSets + `DependencyInjection.cs` extension method
+- [x] SQLite connection string added to `appsettings.json`, DbContext registered in `Program.cs`
+- [x] Initial migration created & applied (`finlo.db` exists)
+- [x] Application layer folder structure created (`Dtos/`, `Interfaces/`, `Services/`, `Repositories/` — empty)
+- [x] Infrastructure layer folder structure partially created (`Data/`, `Seed/` — missing `Repositories/`)
 - [x] Frontend project scaffolded (`client/Finlo.UI` — Vite + React 19 + TypeScript)
 - [ ] Everything below
 
@@ -58,60 +66,78 @@ src/
 │       └── BudgetService.cs
 │
 ├── Finlo.Infrastructure/       ← EF Core DbContext, repositories, migrations
+│   ├── DependencyInjection.cs   ✅ done (AddInfrastructure extension)
 │   ├── Data/
-│   │   └── AppDbContext.cs
+│   │   ├── AppDbContext.cs      ✅ done (DbSets + ApplyConfigurationsFromAssembly)
+│   │   └── Migrations/          ✅ done (InitialCreate applied)
 │   ├── Repositories/
 │   │   ├── TransactionRepository.cs
 │   │   ├── BudgetRepository.cs
 │   │   └── CategoryRepository.cs
-│   ├── Seed/
-│   │   └── CategorySeedData.cs
-│   └── Migrations/
+│   └── Seed/
+│       └── CategorySeedData.cs  ⚠️ exists but empty
 │
 └── Finlo.Api/                  ← Minimal API endpoints, middleware, DI configuration
-    ├── Program.cs
+    ├── Program.cs               ✅ done (endpoint scanning + Infrastructure DI)
+    ├── Extensions/
+    │   └── EndpointExtensions.cs ✅ done (assembly-scanning registration)
     ├── Endpoints/
-    │   ├── TransactionEndpoints.cs
-    │   ├── BudgetEndpoints.cs
-    │   └── CategoryEndpoints.cs
+    │   ├── IEndpoint.cs          ✅ done (endpoint contract)
+    │   ├── Transaction/          (one class per endpoint action)
+    │   │   ├── Create.cs          ⚠️ stub — needs real implementation
+    │   │   ├── GetAll.cs
+    │   │   ├── GetById.cs
+    │   │   ├── Update.cs
+    │   │   └── Delete.cs
+    │   ├── Budget/
+    │   │   ├── Create.cs
+    │   │   ├── GetAll.cs
+    │   │   ├── GetById.cs
+    │   │   ├── Update.cs
+    │   │   ├── Delete.cs
+    │   │   └── GetSummary.cs
+    │   └── Category/
+    │       └── GetAll.cs
     └── Middleware/
         └── ExceptionHandlerMiddleware.cs
 ```
 
-**Register projects in solution & add project references:**
+> **Endpoint pattern:** Each endpoint is a separate class implementing `IEndpoint`.
+> Classes are auto-discovered via assembly scanning in `EndpointExtensions.cs`
+> and registered/mapped in `Program.cs`.
 
-```bash
-# Add projects to solution file
-dotnet sln Finlo.slnx add src/Finlo.Domain/Finlo.Domain.csproj
-dotnet sln Finlo.slnx add src/Finlo.Application/Finlo.Application.csproj
-dotnet sln Finlo.slnx add src/Finlo.Infrastructure/Finlo.Infrastructure.csproj
-dotnet sln Finlo.slnx add src/Finlo.Api/Finlo.Api.csproj
+**Project references (✅ all wired up):**
 
-# Set up project references (Clean Architecture dependency flow)
-dotnet add src/Finlo.Application reference src/Finlo.Domain
-dotnet add src/Finlo.Infrastructure reference src/Finlo.Application
-dotnet add src/Finlo.Api reference src/Finlo.Application
-dotnet add src/Finlo.Api reference src/Finlo.Infrastructure
+```
+Finlo.Domain          → (no dependencies)
+Finlo.Application     → Finlo.Domain
+Finlo.Infrastructure  → Finlo.Application
+Finlo.Api             → Finlo.Application, Finlo.Infrastructure
 ```
 
-**Install NuGet packages:**
+**Installed NuGet packages:**
 
-```bash
-# Infrastructure — EF Core + SQLite
-dotnet add src/Finlo.Infrastructure package Microsoft.EntityFrameworkCore.Sqlite
-dotnet add src/Finlo.Infrastructure package Microsoft.EntityFrameworkCore.Design
+```
+# Infrastructure (✅ installed)
+Microsoft.EntityFrameworkCore.Sqlite      10.0.5
+Microsoft.EntityFrameworkCore.Design      10.0.5
 
-# Api — EF Core Design tools (for migrations CLI)
-dotnet add src/Finlo.Api package Microsoft.EntityFrameworkCore.Design
+# Api (✅ installed)
+Microsoft.AspNetCore.OpenApi              10.0.4
+Microsoft.EntityFrameworkCore             10.0.5
+Microsoft.EntityFrameworkCore.Design      10.0.5
 ```
 
 **Tasks:**
 
 - [X] Register all projects in `Finlo.slnx`
 - [X] Add project references (Domain ← Application ← Infrastructure, Application + Infrastructure ← Api)
-- [X] Install NuGet packages (EF Core Sqlite, EF Core Design)
-- [ ] Clean up `Program.cs` — configure minimal API services, remove any boilerplate
-- [ ] Create folder structure above in Application, Infrastructure, and Api projects
+- [X] Install NuGet packages (EF Core Sqlite, EF Core Design in Infrastructure; EF Core, OpenApi in Api)
+- [X] Create `IEndpoint` interface and `EndpointExtensions` (assembly-scanning endpoint registration)
+- [X] Configure `Program.cs` with endpoint scanning, OpenAPI, HTTPS redirection, Infrastructure DI
+- [X] Create folder structure in Application project (`Dtos/`, `Interfaces/`, `Services/`, `Repositories/` — empty)
+- [X] Create folder structure in Infrastructure project (`Data/`, `Data/Migrations/`, `Seed/`)
+- [ ] Create `Repositories/` folder in Infrastructure project
 
 ---
 
@@ -188,12 +214,14 @@ public enum TransactionType
 
 **Tasks:**
 
-- [ ] Create `AppDbContext.cs` in `Finlo.Infrastructure/Data/` with entity configurations
-- [ ] Add connection string to `appsettings.json`
-- [ ] Register DbContext in `Finlo.Api/Program.cs`
-- [ ] Create initial migration: `dotnet ef migrations add InitialCreate --project src/Finlo.Infrastructure --startup-project src/Finlo.Api`
-- [ ] Apply migration: `dotnet ef database update --startup-project src/Finlo.Api`
-- [ ] Seed default categories via `Finlo.Infrastructure/Seed/CategorySeedData.cs`
+- [X] Create `AppDbContext.cs` in `Finlo.Infrastructure/Data/` with DbSets + `ApplyConfigurationsFromAssembly`
+- [X] Create `DependencyInjection.cs` in `Finlo.Infrastructure/` (`AddInfrastructure` extension registering DbContext with SQLite)
+- [X] Add connection string to `appsettings.json` (`"Data Source=finlo.db"`)
+- [X] Register DbContext in `Finlo.Api/Program.cs` via `builder.Services.AddInfrastructure(builder.Configuration)`
+- [X] Create initial migration: `InitialCreate` (tables: Budgets, Categories, Transactions)
+- [X] Apply migration (`finlo.db` database file created)
+- [ ] Add indexes: `Date` + `Category` on Transactions, composite `(Month, Year)` on Budgets
+- [ ] Seed default categories via `Finlo.Infrastructure/Seed/CategorySeedData.cs` (file exists but is empty)
 
 ---
 
@@ -232,8 +260,8 @@ public enum TransactionType
 - [ ] Create `ITransactionRepository` interface in `Finlo.Application/Interfaces/`
 - [ ] Create `TransactionRepository` in `Finlo.Infrastructure/Repositories/` (CRUD + filtered query)
 - [ ] Create `TransactionService` in `Finlo.Application/Services/` (mapping + validation)
-- [ ] Create `TransactionEndpoints` in `Finlo.Api/Endpoints/` (minimal API route group)
-- [ ] Register services in DI and map endpoints in `Finlo.Api/Program.cs`
+- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Transaction/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`)
+- [ ] Register services in DI in `Finlo.Api/Program.cs` (repositories + services)
 - [ ] Test all endpoints manually (use `.http` file or Swagger)
 
 ---
@@ -277,8 +305,8 @@ public enum TransactionType
 - [ ] Create `IBudgetRepository` interface in `Finlo.Application/Interfaces/`
 - [ ] Create `BudgetRepository` in `Finlo.Infrastructure/Repositories/`
 - [ ] Create `BudgetService` in `Finlo.Application/Services/` (includes summary calculation — queries Transactions via repository)
-- [ ] Create `BudgetEndpoints` in `Finlo.Api/Endpoints/` (minimal API route group)
-- [ ] Register services in DI and map endpoints
+- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Budget/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete`, `GetSummary` — each implements `IEndpoint`)
+- [ ] Register services in DI in `Finlo.Api/Program.cs`
 - [ ] Test all endpoints
 
 ---
@@ -295,7 +323,7 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 
 - [ ] Create `ICategoryRepository` interface in `Finlo.Application/Interfaces/`
 - [ ] Create `CategoryRepository` in `Finlo.Infrastructure/Repositories/`
-- [ ] Create `CategoryEndpoints` in `Finlo.Api/Endpoints/` (single GET route)
+- [ ] Create `GetAll` endpoint class in `Finlo.Api/Endpoints/Category/` (implements `IEndpoint`)
 - [ ] Test endpoint
 
 ---
@@ -390,7 +418,7 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 - [ ] Create `Finlo.Application/Interfaces/IReportRepository.cs`
 - [ ] Create `ReportService` in `Finlo.Application/Services/` (aggregate queries against Transactions)
 - [ ] Create `ReportRepository` in `Finlo.Infrastructure/Repositories/`
-- [ ] Create `ReportEndpoints` in `Finlo.Api/Endpoints/` (minimal API route group)
+- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Report/` (`MonthlySummary`, `CategoryBreakdown`, `Trends` — each implements `IEndpoint`)
 - [ ] Test all report endpoints with sample data
 
 ---
@@ -613,9 +641,9 @@ main          ← stable releases
 This is the exact order to build, task by task:
 
 ```
- 1. [Phase 1.1] Solution registration + project references + NuGet packages
+ 1. [Phase 1.1] Solution registration + project references + NuGet packages + endpoint pattern  ✅ DONE
  2. [Phase 1.2] Domain entities + enum                    ✅ DONE
- 3. [Phase 1.3] AppDbContext (Infrastructure) + SQLite + migration + seed
+ 3. [Phase 1.3] AppDbContext + SQLite + migration          ✅ DONE (indexes + seed remaining)
  4. [Phase 1.4] Transactions CRUD (interfaces/DTOs → repo → service → endpoints)
  5. [Phase 1.5] Budgets CRUD + summary endpoint
  6. [Phase 1.6] Categories endpoint
@@ -633,4 +661,4 @@ This is the exact order to build, task by task:
 18. [Phase 5]   Advanced features
 ```
 
-**Next up: Step 1 — register projects in solution, wire up references, install packages.**
+**Next up: Step 3 (finish) — Add indexes + seed default categories, then Step 4 — Transactions CRUD.**
