@@ -452,11 +452,11 @@ To seed a new table (e.g., default Budgets):
 
 ### Tasks
 
-- [ ] Implement `CategorySeedData.cs` with 8 default category entities
-- [ ] Add `builder.HasData(CategorySeedData.GetCategories())` to `CategoryConfiguration.cs`
-- [ ] Create migration: `dotnet ef migrations add SeedDefaultCategories --project src/Finlo.Infrastructure --startup-project src/Finlo.Api`
-- [ ] Apply migration: `dotnet ef database update --project src/Finlo.Infrastructure --startup-project src/Finlo.Api`
-- [ ] Verify 8 rows in Categories table
+- [x] Implement `CategorySeedData.cs` with 8 default category entities
+- [x] Add `builder.HasData(CategorySeedData.GetCategories())` to `CategoryConfiguration.cs`
+- [x] Create migration: `dotnet ef migrations add SeedDefaultCategories --project src/Finlo.Infrastructure --startup-project src/Finlo.Api`
+- [x] Apply migration: `dotnet ef database update --project src/Finlo.Infrastructure --startup-project src/Finlo.Api`
+- [x] Verify 8 rows in Categories table
 
 ---
 
@@ -605,173 +605,64 @@ volumes:
 > - `healthcheck` → UI container waits for API to be ready before starting
 > - `depends_on` with `condition: service_healthy` → orderly startup
 
-### Step 5 — Create PowerShell scripts
+### Step 5 — Create `Tools/finlo.ps1` CLI
 
-Create `scripts/run.ps1` — orchestrates Docker:
+Single CLI tool at `Tools/finlo.ps1` replacing separate `scripts/run.ps1` and `scripts/seed.ps1`.
+Run from the `Tools/` directory.
 
-```powershell
-<#
-.SYNOPSIS
-    Runs the full Finlo stack via Docker Compose.
-.PARAMETER Build
-    Force rebuild of Docker images before starting.
-.PARAMETER Stop
-    Stop all running containers.
-.PARAMETER Logs
-    Follow container logs after starting.
-#>
-param(
-    [switch]$Build,
-    [switch]$Stop,
-    [switch]$Logs
-)
+**Commands:**
 
-$ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $PSScriptRoot
+| Command | Description |
+|---|---|
+| `./finlo.ps1 start` | Start API + UI locally (each in a new terminal) |
+| `./finlo.ps1 start api` | Start just the API with `dotnet watch` |
+| `./finlo.ps1 start ui` | Start just the Vite dev server |
+| `./finlo.ps1 start docker` | Build & start the full Docker stack |
+| `./finlo.ps1 stop docker` | Stop Docker containers |
+| `./finlo.ps1 reset db` | Delete local SQLite DB files |
+| `./finlo.ps1 reset docker` | Remove containers + volumes |
+| `./finlo.ps1 logs [api\|ui]` | Follow Docker container logs |
+| `./finlo.ps1 migrate [Name]` | Create migration (with name) or apply all (no name) |
+| `./finlo.ps1 seed-db` | Seed DB by applying migrations |
+| `./finlo.ps1 help` | Show help |
 
-Push-Location $Root
-
-if ($Stop) {
-    Write-Host "Stopping Finlo containers..." -ForegroundColor Cyan
-    docker compose down
-    Pop-Location
-    exit 0
-}
-
-Write-Host "Starting Finlo stack..." -ForegroundColor Cyan
-
-$composeArgs = @("compose", "up", "-d")
-if ($Build) {
-    $composeArgs += "--build"
-}
-
-docker @composeArgs
-
-if ($LASTEXITCODE -ne 0) {
-    Pop-Location
-    Write-Host "Failed to start containers." -ForegroundColor Red
-    exit 1
-}
-
-Write-Host ""
-Write-Host "Finlo is running:" -ForegroundColor Green
-Write-Host "  API: http://localhost:5266" -ForegroundColor White
-Write-Host "  UI:  http://localhost:3000" -ForegroundColor White
-Write-Host "  API Docs: http://localhost:5266/openapi/v1.json" -ForegroundColor White
-Write-Host ""
-Write-Host "Stop with: .\scripts\run.ps1 -Stop" -ForegroundColor Gray
-
-if ($Logs) {
-    docker compose logs -f
-}
-
-Pop-Location
-```
-
-Create `scripts/seed.ps1` — seeds the database:
-
-```powershell
-<#
-.SYNOPSIS
-    Seeds the Finlo database with default categories.
-.PARAMETER Docker
-    If set, seeds the database inside the running Docker container.
-#>
-param(
-    [switch]$Docker
-)
-
-$ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $PSScriptRoot
-
-if ($Docker) {
-    Write-Host "Seeding database inside Docker container..." -ForegroundColor Cyan
-
-    $containerId = docker compose ps -q api 2>$null
-    if (-not $containerId) {
-        Write-Host "API container is not running. Start it first with: .\scripts\run.ps1" -ForegroundColor Red
-        exit 1
-    }
-
-    # The API auto-seeds on startup, so just verify
-    $response = docker exec $containerId curl -sf http://localhost:5266/api/categories 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Database is seeded (API is running and responding)." -ForegroundColor Green
-    }
-    else {
-        Write-Host "API is starting up — seed runs automatically on startup." -ForegroundColor Yellow
-    }
-}
-else {
-    Write-Host "Seeding database locally..." -ForegroundColor Cyan
-
-    Push-Location $Root
-
-    # Apply migrations
-    Write-Host "Applying migrations..." -ForegroundColor Gray
-    dotnet ef database update --project src/Finlo.Infrastructure --startup-project src/Finlo.Api
-    if ($LASTEXITCODE -ne 0) {
-        Pop-Location
-        Write-Host "Migration failed." -ForegroundColor Red
-        exit 1
-    }
-
-    # Run the API briefly — it seeds on startup, then stop it
-    Write-Host "Starting API to trigger seed..." -ForegroundColor Gray
-    $job = Start-Job -ScriptBlock {
-        param($root)
-        Set-Location $root
-        dotnet run --project src/Finlo.Api --no-launch-profile 2>&1
-    } -ArgumentList $Root
-
-    # Wait for the API to start and seed
-    $ready = $false
-    for ($i = 0; $i -lt 30; $i++) {
-        Start-Sleep -Seconds 1
-        try {
-            $null = Invoke-RestMethod -Uri "http://localhost:5266/openapi/v1.json" -TimeoutSec 2 -ErrorAction SilentlyContinue
-            $ready = $true
-            break
-        }
-        catch { }
-    }
-
-    Stop-Job $job -ErrorAction SilentlyContinue
-    Remove-Job $job -Force -ErrorAction SilentlyContinue
-
-    Pop-Location
-
-    if ($ready) {
-        Write-Host "Database seeded successfully." -ForegroundColor Green
-    }
-    else {
-        Write-Host "Could not confirm seed completed. Check API logs." -ForegroundColor Yellow
-    }
-}
-```
+> **Key concepts:**
+> - Single entry-point CLI inspired by the Credentialing Requirements `ruledev.ps1` pattern
+> - `$Root` resolves to repo root via `Split-Path -Parent $PSScriptRoot`
+> - `start api` / `start ui` each open a new `pwsh` terminal with `-NoExit`
+> - `start docker` runs `docker compose up -d --build` and prints service URLs
+> - `migrate` wraps EF Core commands with correct `--project` / `--startup-project` paths
 
 ### Step 6 — Test it
 
 ```powershell
-# First run (builds images + starts containers + auto-seeds)
-.\scripts\run.ps1 -Build
+# Start full Docker stack
+.\finlo.ps1 start docker
 
 # Verify:
 #   - http://localhost:5266/openapi/v1.json → API docs (JSON)
 #   - http://localhost:3000 → UI (Vite React app)
 
 # Check logs
-.\scripts\run.ps1 -Logs
+.\finlo.ps1 logs
 
 # Stop everything
-.\scripts\run.ps1 -Stop
+.\finlo.ps1 stop docker
 
-# Seed verification (Docker)
-.\scripts\run.ps1 -Build
-.\scripts\seed.ps1 -Docker
+# Local dev (API + UI in separate terminals)
+.\finlo.ps1 start
 
-# Seed verification (local, without Docker)
-.\scripts\seed.ps1
+# Seed database
+.\finlo.ps1 seed-db
+
+# Create a new migration
+.\finlo.ps1 migrate AddIndexes
+
+# Apply pending migrations
+.\finlo.ps1 migrate
+
+# Reset local database
+.\finlo.ps1 reset db
 ```
 
 **Docker URLs when running:**
@@ -784,17 +675,16 @@ else {
 
 ### Tasks
 
-- [ ] Create `.dockerignore` at repo root
-- [ ] Create `src/Finlo.Api/Dockerfile` (multi-stage: SDK build → ASP.NET runtime)
-- [ ] Create `client/Finlo.UI/nginx.conf` (SPA routing + `/api/` reverse proxy)
-- [ ] Create `client/Finlo.UI/Dockerfile` (multi-stage: Node build → nginx)
-- [ ] Create `docker-compose.yml` at repo root (API + UI services, volume, healthcheck)
-- [ ] Create `scripts/run.ps1` (start/stop/rebuild Docker stack)
-- [ ] Create `scripts/seed.ps1` (seed database locally or in Docker)
-- [ ] Run `scripts/run.ps1 -Build` and verify both containers start
+- [x] Create `.dockerignore` at repo root
+- [x] Create `src/Finlo.Api/Dockerfile` (multi-stage: SDK build → ASP.NET runtime)
+- [x] Create `client/Finlo.UI/nginx.conf` (SPA routing + `/api/` reverse proxy)
+- [x] Create `client/Finlo.UI/Dockerfile` (multi-stage: Node build → nginx)
+- [x] Create `docker-compose.yml` at repo root (API + UI services, volume, healthcheck)
+- [x] Create `Tools/finlo.ps1` CLI (start/stop/reset/logs/migrate/seed-db commands)
+- [ ] Run `.\finlo.ps1 start docker` and verify both containers start
 - [ ] Open http://localhost:5266/openapi/v1.json — verify API responds
 - [ ] Open http://localhost:3000 — verify UI loads
-- [ ] Run `scripts/run.ps1 -Stop` to clean up
+- [ ] Run `.\finlo.ps1 stop docker` to clean up
 
 ---
 
@@ -1097,7 +987,7 @@ public enum TransactionType
 - [X] Apply migration (`finlo.db` database file created)
 - [X] Create entity configurations (`BudgetConfiguration`, `CategoryConfiguration`, `TransactionConfiguration` in `Data/Configurations/`)
 - [ ] Add indexes to configurations: `Date` + `Category` on Transactions, composite `(Month, Year)` on Budgets
-- [ ] Implement seed data via EF Core `HasData` in `CategoryConfiguration` — see [Database Seeding](#database-seeding)
+- [x] Implement seed data via EF Core `HasData` in `CategoryConfiguration` — see [Database Seeding](#database-seeding)
 - [ ] Create new migration to apply configuration changes (indexes, seed data, max lengths, column types) to database
 
 ---

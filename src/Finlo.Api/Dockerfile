@@ -1,5 +1,4 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
-WORKDIR /srcFROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
 WORKDIR /src
 
 # Copy csproj files and restore (layer caching)

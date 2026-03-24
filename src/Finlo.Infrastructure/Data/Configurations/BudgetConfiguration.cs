@@ -1,5 +1,4 @@
 using Finlo.Domain.Entities;
-using Finlo.Infrastructure.Seed;
 using Microsoft.EntityFrameworkCore;
 
 namespace Finlo.Infrastructure.Data.Configurations;
@@ -23,7 +22,5 @@ public class BudgetConfiguration : IEntityTypeConfiguration<Budget>
         
         builder.Property(b => b.Year)
             .IsRequired();
-
-        builder.HasData(BudgetSeedData.GetBudgets());
     }
 }
