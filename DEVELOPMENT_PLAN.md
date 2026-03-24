@@ -20,8 +20,15 @@
 - [x] Initial migration created & applied (`finlo.db` exists)
 - [x] EF Core entity configurations created (`BudgetConfiguration`, `CategoryConfiguration`, `TransactionConfiguration`)
 - [x] Application layer folder structure created (`Dtos/`, `Interfaces/`, `Services/`, `Repositories/` — empty)
-- [x] Infrastructure layer folder structure partially created (`Data/`, `Data/Configurations/`, `Seed/` — missing `Repositories/`)
+- [x] Infrastructure layer folder structure created (`Data/`, `Data/Configurations/`, `Seed/`, `Repositories/`)
+- [x] Generic repository pattern established (`IBaseRepository<T>` interface + `BaseRepository<T>` implementation)
+- [x] `ITransactionRepository` interface created (inherits `IBaseRepository<Transaction>`)
+- [x] `TransactionRepository` scaffolded (inherits `BaseRepository<Transaction>`, no custom query methods yet)
 - [x] Frontend project scaffolded (`client/Finlo.UI` — Vite + React 19 + TypeScript)
+- [x] Frontend dependencies installed (axios, react-router-dom, zustand, recharts, tailwindcss + @tailwindcss/vite)
+- [x] Database seeded with 8 default categories via EF Core `HasData` + migration
+- [x] Docker setup complete (API + UI Dockerfiles, docker-compose, nginx, `.dockerignore`)
+- [x] CLI tool created (`Tools/finlo.ps1` — start/stop/reset/logs/migrate/seed-db)
 - [ ] Everything below
 
 ---
@@ -67,10 +74,12 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 
 - [ ] Create DTOs in `Finlo.Application/DTOs/Transactions/`: `CreateTransactionDto`, `UpdateTransactionDto`, `TransactionResponseDto`
 - [ ] Create `PaginationParams` and `PagedResult<T>` in `Finlo.Application/DTOs/Common/`
-- [ ] Create `ITransactionRepository` interface in `Finlo.Application/Interfaces/`
-- [ ] Create `TransactionRepository` in `Finlo.Infrastructure/Repositories/` (CRUD + filtered query)
+- [x] Create `ITransactionRepository` interface in `Finlo.Application/Interfaces/` *(created — inherits `IBaseRepository`, needs custom filtered query methods)*
+- [ ] Add filtered query methods to `ITransactionRepository` (paginated list with filters)
+- [x] Create `TransactionRepository` in `Finlo.Infrastructure/Repositories/` *(scaffolded — inherits `BaseRepository`, needs CRUD + filtered query implementation)*
+- [ ] Implement filtered query methods in `TransactionRepository`
 - [ ] Create `TransactionService` in `Finlo.Application/Services/` (mapping + validation)
-- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Transaction/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`)
+- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Transaction/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`) *(`Create.cs` exists as stub — needs real implementation; others missing)*
 - [ ] Register services in DI in `Finlo.Api/Program.cs` (repositories + services)
 - [ ] Test all endpoints manually (use `.http` file or Swagger)
 
@@ -703,7 +712,7 @@ npm install -D tailwindcss @tailwindcss/vite
 ### Tasks
 
 - [x] Scaffold Vite + React + TS project (`client/Finlo.UI/`)
-- [ ] Install dependencies (axios, router, zustand, recharts, tailwind)
+- [x] Install dependencies (axios, router, zustand, recharts, tailwind)
 - [ ] Set up Tailwind CSS
 - [ ] Create folder structure
 - [ ] Create axios client with base URL pointing to API
@@ -798,7 +807,9 @@ src/
 │   │       ├── PaginationParams.cs
 │   │       └── PagedResult.cs
 │   ├── Interfaces/
-│   │   ├── ITransactionRepository.cs
+│   │   ├── IBaseRepository.cs        ✅ done (generic CRUD contract)
+│   │   ├── Transactions/
+│   │   │   └── ITransactionRepository.cs  ✅ done (inherits IBaseRepository)
 │   │   ├── IBudgetRepository.cs
 │   │   └── ICategoryRepository.cs
 │   └── Services/
@@ -815,7 +826,9 @@ src/
 │   │   │   └── TransactionConfiguration.cs
 │   │   └── Migrations/          ✅ done (InitialCreate applied)
 │   ├── Repositories/
-│   │   ├── TransactionRepository.cs
+│   │   ├── BaseRepository.cs          ✅ done (generic EF Core CRUD)
+│   │   ├── Transactions/
+│   │   │   └── TransactionRepository.cs  ✅ done (scaffolded, needs query methods)
 │   │   ├── BudgetRepository.cs
 │   │   └── CategoryRepository.cs
 │   └── Seed/
@@ -828,11 +841,11 @@ src/
     ├── Endpoints/
     │   ├── IEndpoint.cs          ✅ done (endpoint contract)
     │   ├── Transaction/          (one class per endpoint action)
-    │   │   ├── Create.cs          ⚠️ stub — needs real implementation
-    │   │   ├── GetAll.cs
-    │   │   ├── GetById.cs
-    │   │   ├── Update.cs
-    │   │   └── Delete.cs
+    │   │   ├── Create.cs          ⚠️ stub exists — needs real implementation
+    │   │   ├── GetAll.cs          ❌ not created
+    │   │   ├── GetById.cs         ❌ not created
+    │   │   ├── Update.cs          ❌ not created
+    │   │   └── Delete.cs          ❌ not created
     │   ├── Budget/
     │   │   ├── Create.cs
     │   │   ├── GetAll.cs
@@ -1001,7 +1014,7 @@ public enum TransactionType
 - [X] Configure `Program.cs` with endpoint scanning, OpenAPI, HTTPS redirection, Infrastructure DI
 - [X] Create folder structure in Application project (`Dtos/`, `Interfaces/`, `Services/`, `Repositories/` — empty)
 - [X] Create folder structure in Infrastructure project (`Data/`, `Data/Migrations/`, `Seed/`)
-- [ ] Create `Repositories/` folder in Infrastructure project
+- [X] Create `Repositories/` folder in Infrastructure project (contains `BaseRepository.cs` + `Transactions/TransactionRepository.cs`)
 
 ---
 
@@ -1013,16 +1026,16 @@ This is the exact order to build, task by task:
  1. [Setup]          Solution registration + project references + NuGet packages + endpoint pattern  ✅ DONE
  2. [Architecture]   Domain entities + enum                    ✅ DONE
  3. [Architecture]   AppDbContext + SQLite + migration + configs  ✅ DONE (indexes remaining)
- 4. [Technical]      Database seeding (CategorySeedData + HasData + migration)
- 5. [Technical]      Docker setup (Dockerfiles, compose, scripts)
- 6. [Feature]        Transactions CRUD (interfaces/DTOs → repo → service → endpoints)
+ 4. [Technical]      Database seeding (CategorySeedData + HasData + migration)  ✅ DONE
+ 5. [Technical]      Docker setup (Dockerfiles, compose, scripts)  ✅ DONE
+ 6. [Feature]        Transactions CRUD (interfaces/DTOs → repo → service → endpoints)  🔧 IN PROGRESS (repo interface/impl scaffolded, endpoint stub exists — DTOs, service, full endpoints remaining)
  7. [Feature]        Budgets CRUD + summary endpoint
  8. [Feature]        Categories endpoint
  9. [Feature]        Validation + error handling
 10. [Verification]   ✅ Verify all API endpoints
 11. [Feature]        Reports endpoints
 12. [Verification]   ✅ Verify reports
-13. [Technical]      Frontend deps + routing + layout           (scaffold ✅ DONE)
+13. [Technical]      Frontend deps + routing + layout           (scaffold ✅ DONE, deps ✅ DONE — routing + layout remaining)
 14. [Feature]        Transactions UI
 15. [Feature]        Budgets UI
 16. [Feature]        Dashboard
@@ -1032,4 +1045,4 @@ This is the exact order to build, task by task:
 20. [Feature]        Advanced features
 ```
 
-**Next up: Step 4 — Database seeding (CategorySeedData + HasData + migration).**
+**Next up: Step 6 — Transactions CRUD (DTOs → filtered query methods → service → endpoints).**
