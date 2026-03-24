@@ -681,10 +681,10 @@ Run from the `Tools/` directory.
 - [x] Create `client/Finlo.UI/Dockerfile` (multi-stage: Node build → nginx)
 - [x] Create `docker-compose.yml` at repo root (API + UI services, volume, healthcheck)
 - [x] Create `Tools/finlo.ps1` CLI (start/stop/reset/logs/migrate/seed-db commands)
-- [ ] Run `.\finlo.ps1 start docker` and verify both containers start
-- [ ] Open http://localhost:5266/openapi/v1.json — verify API responds
-- [ ] Open http://localhost:3000 — verify UI loads
-- [ ] Run `.\finlo.ps1 stop docker` to clean up
+- [x] Run `.\finlo.ps1 start docker` and verify both containers start
+- [x] Open http://localhost:5266/openapi/v1.json — verify API responds
+- [x] Open http://localhost:3000 — verify UI loads
+- [x] Run `.\finlo.ps1 stop docker` to clean up
 
 ---
 
