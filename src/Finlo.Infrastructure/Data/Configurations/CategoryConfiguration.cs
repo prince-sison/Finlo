@@ -1,4 +1,5 @@
 using Finlo.Domain.Entities;
+using Finlo.Infrastructure.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -18,5 +19,7 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .IsRequired()
             .HasConversion<string>()
             .HasMaxLength(500);
+
+        builder.HasData(CategorySeedData.GetCategories());
     }
 }
