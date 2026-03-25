@@ -2,7 +2,7 @@
 
 > **Stack:** .NET 10 Web API · React + TypeScript · SQLite  
 > **Architecture:** Clean Architecture (Domain → Application → Infrastructure → Api)  
-> **Approach:** API-first, then UI  
+> **Approach:** API-first, then UI
 
 ---
 
@@ -43,13 +43,13 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 
 ### API Endpoints
 
-| Method | Route                      | Description                     |
-|--------|----------------------------|---------------------------------|
-| GET    | `/api/transactions`        | List (paginated, filterable)    |
-| GET    | `/api/transactions/{id}`   | Get single                      |
-| POST   | `/api/transactions`        | Create                          |
-| PUT    | `/api/transactions/{id}`   | Update                          |
-| DELETE | `/api/transactions/{id}`   | Delete                          |
+| Method | Route                    | Description                  |
+| ------ | ------------------------ | ---------------------------- |
+| GET    | `/api/transactions`      | List (paginated, filterable) |
+| GET    | `/api/transactions/{id}` | Get single                   |
+| POST   | `/api/transactions`      | Create                       |
+| PUT    | `/api/transactions/{id}` | Update                       |
+| DELETE | `/api/transactions/{id}` | Delete                       |
 
 **Query parameters for GET list:**
 
@@ -74,12 +74,12 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 
 - [ ] Create DTOs in `Finlo.Application/DTOs/Transactions/`: `CreateTransactionDto`, `UpdateTransactionDto`, `TransactionResponseDto`
 - [ ] Create `PaginationParams` and `PagedResult<T>` in `Finlo.Application/DTOs/Common/`
-- [x] Create `ITransactionRepository` interface in `Finlo.Application/Interfaces/` *(created — inherits `IBaseRepository`, needs custom filtered query methods)*
+- [x] Create `ITransactionRepository` interface in `Finlo.Application/Interfaces/` _(created — inherits `IBaseRepository`, needs custom filtered query methods)_
 - [ ] Add filtered query methods to `ITransactionRepository` (paginated list with filters)
-- [x] Create `TransactionRepository` in `Finlo.Infrastructure/Repositories/` *(scaffolded — inherits `BaseRepository`, needs CRUD + filtered query implementation)*
+- [x] Create `TransactionRepository` in `Finlo.Infrastructure/Repositories/` _(scaffolded — inherits `BaseRepository`, needs CRUD + filtered query implementation)_
 - [ ] Implement filtered query methods in `TransactionRepository`
 - [ ] Create `TransactionService` in `Finlo.Application/Services/` (mapping + validation)
-- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Transaction/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`) *(`Create.cs` exists as stub — needs real implementation; others missing)*
+- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Transaction/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`) _(`Create.cs` exists as stub — needs real implementation; others missing)_
 - [ ] Register services in DI in `Finlo.Api/Program.cs` (repositories + services)
 - [ ] Test all endpoints manually (use `.http` file or Swagger)
 
@@ -98,14 +98,14 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 
 ### API Endpoints
 
-| Method | Route                   | Description                      |
-|--------|-------------------------|----------------------------------|
-| GET    | `/api/budgets`          | List (filter by month/year)      |
-| GET    | `/api/budgets/{id}`     | Get single                       |
-| POST   | `/api/budgets`          | Create                           |
-| PUT    | `/api/budgets/{id}`     | Update                           |
-| DELETE | `/api/budgets/{id}`     | Delete                           |
-| GET    | `/api/budgets/summary`  | Budget vs Actual for month/year  |
+| Method | Route                  | Description                     |
+| ------ | ---------------------- | ------------------------------- |
+| GET    | `/api/budgets`         | List (filter by month/year)     |
+| GET    | `/api/budgets/{id}`    | Get single                      |
+| POST   | `/api/budgets`         | Create                          |
+| PUT    | `/api/budgets/{id}`    | Update                          |
+| DELETE | `/api/budgets/{id}`    | Delete                          |
+| GET    | `/api/budgets/summary` | Budget vs Actual for month/year |
 
 **Budget Summary response shape:**
 
@@ -116,14 +116,14 @@ What the app does: modules, endpoints, UI pages, and roadmap.
   "budgets": [
     {
       "category": "Food",
-      "limit": 500.00,
-      "spent": 320.50,
-      "remaining": 179.50,
+      "limit": 500.0,
+      "spent": 320.5,
+      "remaining": 179.5,
       "percentUsed": 64.1
     }
   ],
-  "totalBudget": 2000.00,
-  "totalSpent": 1450.00
+  "totalBudget": 2000.0,
+  "totalSpent": 1450.0
 }
 ```
 
@@ -157,9 +157,9 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 
 ### API Endpoints
 
-| Method | Route              | Description        |
-|--------|--------------------|--------------------|
-| GET    | `/api/categories`  | List all categories |
+| Method | Route             | Description         |
+| ------ | ----------------- | ------------------- |
+| GET    | `/api/categories` | List all categories |
 
 Simple read-only endpoint returning seeded categories. No full CRUD needed for V1.
 
@@ -176,11 +176,11 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 
 ### API Endpoints
 
-| Method | Route                              | Description                         |
-|--------|------------------------------------|-------------------------------------|
-| GET    | `/api/reports/monthly-summary`     | Total income/expense for a month    |
-| GET    | `/api/reports/category-breakdown`  | Spending per category for a month   |
-| GET    | `/api/reports/trends`              | Monthly totals over last N months   |
+| Method | Route                             | Description                       |
+| ------ | --------------------------------- | --------------------------------- |
+| GET    | `/api/reports/monthly-summary`    | Total income/expense for a month  |
+| GET    | `/api/reports/category-breakdown` | Spending per category for a month |
+| GET    | `/api/reports/trends`             | Monthly totals over last N months |
 
 **Monthly Summary response:**
 
@@ -188,9 +188,9 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 {
   "month": 3,
   "year": 2026,
-  "totalIncome": 5000.00,
-  "totalExpense": 3200.00,
-  "netSavings": 1800.00
+  "totalIncome": 5000.0,
+  "totalExpense": 3200.0,
+  "netSavings": 1800.0
 }
 ```
 
@@ -201,8 +201,8 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
   "month": 3,
   "year": 2026,
   "breakdown": [
-    { "category": "Food", "amount": 450.00, "percentage": 14.06 },
-    { "category": "Transport", "amount": 200.00, "percentage": 6.25 }
+    { "category": "Food", "amount": 450.0, "percentage": 14.06 },
+    { "category": "Transport", "amount": 200.0, "percentage": 6.25 }
   ]
 }
 ```
@@ -521,6 +521,7 @@ ENTRYPOINT ["dotnet", "Finlo.Api.dll"]
 ```
 
 > **Key concepts:**
+>
 > - Multi-stage build: SDK image for building, smaller ASP.NET runtime image for running
 > - `COPY *.csproj` + `RUN dotnet restore` first = Docker layer caching (restores are cached if csproj unchanged)
 > - `ASPNETCORE_URLS` tells Kestrel which port to listen on inside the container
@@ -551,6 +552,7 @@ server {
 ```
 
 > **What this does:**
+>
 > - `try_files` → serves `index.html` for any route (SPA client-side routing)
 > - `/api/` → proxies API calls to the `api` container (Docker Compose service name)
 
@@ -589,7 +591,8 @@ services:
     volumes:
       - api-data:/app/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5266/openapi/v1.json || exit 1"]
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:5266/openapi/v1.json || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -609,6 +612,7 @@ volumes:
 ```
 
 > **Key concepts:**
+>
 > - `ConnectionStrings__DefaultConnection` overrides `appsettings.json` via env var (double underscore = nested JSON key)
 > - `volumes: api-data` persists the SQLite database across container restarts
 > - `healthcheck` → UI container waits for API to be ready before starting
@@ -621,21 +625,22 @@ Run from the `Tools/` directory.
 
 **Commands:**
 
-| Command | Description |
-|---|---|
-| `./finlo.ps1 start` | Start API + UI locally (each in a new terminal) |
-| `./finlo.ps1 start api` | Start just the API with `dotnet watch` |
-| `./finlo.ps1 start ui` | Start just the Vite dev server |
-| `./finlo.ps1 start docker` | Build & start the full Docker stack |
-| `./finlo.ps1 stop docker` | Stop Docker containers |
-| `./finlo.ps1 reset db` | Delete local SQLite DB files |
-| `./finlo.ps1 reset docker` | Remove containers + volumes |
-| `./finlo.ps1 logs [api\|ui]` | Follow Docker container logs |
+| Command                      | Description                                         |
+| ---------------------------- | --------------------------------------------------- |
+| `./finlo.ps1 start`          | Start API + UI locally (each in a new terminal)     |
+| `./finlo.ps1 start api`      | Start just the API with `dotnet watch`              |
+| `./finlo.ps1 start ui`       | Start just the Vite dev server                      |
+| `./finlo.ps1 start docker`   | Build & start the full Docker stack                 |
+| `./finlo.ps1 stop docker`    | Stop Docker containers                              |
+| `./finlo.ps1 reset db`       | Delete local SQLite DB files                        |
+| `./finlo.ps1 reset docker`   | Remove containers + volumes                         |
+| `./finlo.ps1 logs [api\|ui]` | Follow Docker container logs                        |
 | `./finlo.ps1 migrate [Name]` | Create migration (with name) or apply all (no name) |
-| `./finlo.ps1 seed-db` | Seed DB by applying migrations |
-| `./finlo.ps1 help` | Show help |
+| `./finlo.ps1 seed-db`        | Seed DB by applying migrations                      |
+| `./finlo.ps1 help`           | Show help                                           |
 
 > **Key concepts:**
+>
 > - Single entry-point CLI inspired by the Credentialing Requirements `ruledev.ps1` pattern
 > - `$Root` resolves to repo root via `Split-Path -Parent $PSScriptRoot`
 > - `start api` / `start ui` each open a new `pwsh` terminal with `-NoExit`
@@ -676,8 +681,8 @@ Run from the `Tools/` directory.
 
 **Docker URLs when running:**
 
-| Service | URL                                  |
-|---------|--------------------------------------|
+| Service | URL                                   |
+| ------- | ------------------------------------- |
 | UI      | http://localhost:3000                 |
 | API     | http://localhost:5266                 |
 | OpenAPI | http://localhost:5266/openapi/v1.json |
@@ -724,15 +729,15 @@ npm install -D tailwindcss @tailwindcss/vite
 
 ## API Response Conventions
 
-| Scenario          | Status | Body                        |
-|-------------------|--------|-----------------------------|
-| Success (list)    | 200    | `{ data: [...], pagination }` |
-| Success (single)  | 200    | `{ data: {...} }`            |
-| Created           | 201    | `{ data: {...} }`            |
-| No content        | 204    | (empty)                      |
-| Validation error  | 400    | `{ status, message, errors }` |
-| Not found         | 404    | `{ status, message }`        |
-| Server error      | 500    | `{ status, message }`        |
+| Scenario         | Status | Body                          |
+| ---------------- | ------ | ----------------------------- |
+| Success (list)   | 200    | `{ data: [...], pagination }` |
+| Success (single) | 200    | `{ data: {...} }`             |
+| Created          | 201    | `{ data: {...} }`             |
+| No content       | 204    | (empty)                       |
+| Validation error | 400    | `{ status, message, errors }` |
+| Not found        | 404    | `{ status, message }`         |
+| Server error     | 500    | `{ status, message }`         |
 
 ---
 
@@ -935,34 +940,34 @@ public enum TransactionType
 
 **`Transaction` entity** (`src/Finlo.Domain/Entities/Transaction.cs`):
 
-| Property    | Type              | Notes                       |
-|-------------|-------------------|-----------------------------|
-| Id          | `Guid`            | PK, auto-generated          |
-| Amount      | `decimal`         | Always positive              |
-| Type        | `TransactionType` | Income or Expense            |
-| Category    | `string`          | FK to Category.Name or free text |
-| Date        | `DateTime`        | When the transaction occurred |
-| Notes       | `string?`         | Optional                     |
-| CreatedAt   | `DateTime`        | Auto-set on creation         |
-| UpdatedAt   | `DateTime?`       | Auto-set on update           |
+| Property  | Type              | Notes                            |
+| --------- | ----------------- | -------------------------------- |
+| Id        | `Guid`            | PK, auto-generated               |
+| Amount    | `decimal`         | Always positive                  |
+| Type      | `TransactionType` | Income or Expense                |
+| Category  | `string`          | FK to Category.Name or free text |
+| Date      | `DateTime`        | When the transaction occurred    |
+| Notes     | `string?`         | Optional                         |
+| CreatedAt | `DateTime`        | Auto-set on creation             |
+| UpdatedAt | `DateTime?`       | Auto-set on update               |
 
 **`Budget` entity** (`src/Finlo.Domain/Entities/Budget.cs`):
 
-| Property  | Type      | Notes                          |
-|-----------|-----------|--------------------------------|
-| Id        | `Guid`    | PK                             |
-| Category  | `string`  | Budget category                |
-| Limit     | `decimal` | Monthly budget limit           |
-| Month     | `int`     | 1–12                           |
-| Year      | `int`     | e.g. 2026                      |
-| CreatedAt | `DateTime`| Auto-set                       |
+| Property  | Type       | Notes                |
+| --------- | ---------- | -------------------- |
+| Id        | `Guid`     | PK                   |
+| Category  | `string`   | Budget category      |
+| Limit     | `decimal`  | Monthly budget limit |
+| Month     | `int`      | 1–12                 |
+| Year      | `int`      | e.g. 2026            |
+| CreatedAt | `DateTime` | Auto-set             |
 
 **`Category` entity** (`src/Finlo.Domain/Entities/Category.cs`):
 
-| Property | Type              | Notes       |
-|----------|-------------------|-------------|
-| Id       | `Guid`            | PK          |
-| Name     | `string`          | Unique      |
+| Property | Type              | Notes          |
+| -------- | ----------------- | -------------- |
+| Id       | `Guid`            | PK             |
+| Name     | `string`          | Unique         |
 | Type     | `TransactionType` | Income/Expense |
 
 ### Tasks
@@ -992,13 +997,13 @@ public enum TransactionType
 
 ### Tasks
 
-- [X] Create `AppDbContext.cs` in `Finlo.Infrastructure/Data/` with DbSets + `ApplyConfigurationsFromAssembly`
-- [X] Create `DependencyInjection.cs` in `Finlo.Infrastructure/` (`AddInfrastructure` extension registering DbContext with SQLite)
-- [X] Add connection string to `appsettings.json` (`"Data Source=finlo.db"`)
-- [X] Register DbContext in `Finlo.Api/Program.cs` via `builder.Services.AddInfrastructure(builder.Configuration)`
-- [X] Create initial migration: `InitialCreate` (tables: Budgets, Categories, Transactions)
-- [X] Apply migration (`finlo.db` database file created)
-- [X] Create entity configurations (`BudgetConfiguration`, `CategoryConfiguration`, `TransactionConfiguration` in `Data/Configurations/`)
+- [x] Create `AppDbContext.cs` in `Finlo.Infrastructure/Data/` with DbSets + `ApplyConfigurationsFromAssembly`
+- [x] Create `DependencyInjection.cs` in `Finlo.Infrastructure/` (`AddInfrastructure` extension registering DbContext with SQLite)
+- [x] Add connection string to `appsettings.json` (`"Data Source=finlo.db"`)
+- [x] Register DbContext in `Finlo.Api/Program.cs` via `builder.Services.AddInfrastructure(builder.Configuration)`
+- [x] Create initial migration: `InitialCreate` (tables: Budgets, Categories, Transactions)
+- [x] Apply migration (`finlo.db` database file created)
+- [x] Create entity configurations (`BudgetConfiguration`, `CategoryConfiguration`, `TransactionConfiguration` in `Data/Configurations/`)
 - [ ] Add indexes to configurations: `Date` + `Category` on Transactions, composite `(Month, Year)` on Budgets
 - [x] Implement seed data via EF Core `HasData` in `CategoryConfiguration` — see [Database Seeding](#database-seeding)
 - [ ] Create new migration to apply configuration changes (indexes, seed data, max lengths, column types) to database
@@ -1007,14 +1012,14 @@ public enum TransactionType
 
 ## Setup Tasks
 
-- [X] Register all projects in `Finlo.slnx`
-- [X] Add project references (Domain ← Application ← Infrastructure, Application + Infrastructure ← Api)
-- [X] Install NuGet packages (EF Core Sqlite, EF Core Design in Infrastructure; EF Core, OpenApi in Api)
-- [X] Create `IEndpoint` interface and `EndpointExtensions` (assembly-scanning endpoint registration)
-- [X] Configure `Program.cs` with endpoint scanning, OpenAPI, HTTPS redirection, Infrastructure DI
-- [X] Create folder structure in Application project (`Dtos/`, `Interfaces/`, `Services/`, `Repositories/` — empty)
-- [X] Create folder structure in Infrastructure project (`Data/`, `Data/Migrations/`, `Seed/`)
-- [X] Create `Repositories/` folder in Infrastructure project (contains `BaseRepository.cs` + `Transactions/TransactionRepository.cs`)
+- [x] Register all projects in `Finlo.slnx`
+- [x] Add project references (Domain ← Application ← Infrastructure, Application + Infrastructure ← Api)
+- [x] Install NuGet packages (EF Core Sqlite, EF Core Design in Infrastructure; EF Core, OpenApi in Api)
+- [x] Create `IEndpoint` interface and `EndpointExtensions` (assembly-scanning endpoint registration)
+- [x] Configure `Program.cs` with endpoint scanning, OpenAPI, HTTPS redirection, Infrastructure DI
+- [x] Create folder structure in Application project (`Dtos/`, `Interfaces/`, `Services/`, `Repositories/` — empty)
+- [x] Create folder structure in Infrastructure project (`Data/`, `Data/Migrations/`, `Seed/`)
+- [x] Create `Repositories/` folder in Infrastructure project (contains `BaseRepository.cs` + `Transactions/TransactionRepository.cs`)
 
 ---
 
