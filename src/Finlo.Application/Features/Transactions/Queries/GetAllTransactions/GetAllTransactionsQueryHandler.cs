@@ -2,6 +2,7 @@ using Finlo.Application.DTOs.Common;
 using Finlo.Application.DTOs.Transactions;
 using Finlo.Application.Interfaces.Messaging;
 using Finlo.Application.Interfaces.Transactions;
+using Finlo.Domain.Primitives;
 
 namespace Finlo.Application.Features.Transactions.Queries.GetAllTransactions;
 
@@ -14,7 +15,7 @@ internal sealed class GetAllTransactionsQueryHandler : IQueryHandler<GetAllTrans
         _transactionRepository = transactionRepository;
     }
 
-    public async Task<Domain.Primitives.Result<PagedResult<TransactionResponseDto>>> Handle(GetAllTransactionsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<TransactionResponseDto>>> Handle(GetAllTransactionsQuery request, CancellationToken cancellationToken)
     {
         var pagedTransactions = await _transactionRepository.GetAllAsync(request.PaginationParams, cancellationToken);
 
@@ -38,6 +39,6 @@ internal sealed class GetAllTransactionsQueryHandler : IQueryHandler<GetAllTrans
             PageSize = pagedTransactions.PageSize
         };
 
-        return Domain.Primitives.Result.Success(result);
+        return Result.Success(result);
     }
 }

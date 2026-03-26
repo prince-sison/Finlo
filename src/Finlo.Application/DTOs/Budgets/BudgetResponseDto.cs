@@ -1,8 +1,6 @@
-using System.ComponentModel;
+namespace Finlo.Application.DTOs.Budgets;
 
-namespace Finlo.Domain.Entities;
-
-public class Budget
+public class BudgetResponseDto
 {
     public Guid Id { get; set; }
     public string Category { get; set; }

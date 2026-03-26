@@ -1,14 +1,10 @@
-using System.ComponentModel;
+namespace Finlo.Application.DTOs.Budgets;
 
-namespace Finlo.Domain.Entities;
-
-public class Budget
+public class UpdateBudgetDto
 {
     public Guid Id { get; set; }
     public string Category { get; set; }
     public decimal Limit { get; set; }
     public int Month { get; set; }
     public int Year { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
 }
