@@ -1,7 +1,8 @@
 # Finlo — Personal Finance Tracker: Development Plan
 
 > **Stack:** .NET 10 Web API · React + TypeScript · SQLite  
-> **Architecture:** Clean Architecture (Domain → Application → Infrastructure → Api)  
+> **Architecture:** Clean Architecture + CQRS (Domain → Application → Infrastructure → Api)  
+> **Pattern:** CQRS via `Finlo.Application/Features/{Module}/Commands/` and `Queries/`  
 > **Approach:** API-first, then UI
 
 ---
@@ -19,16 +20,26 @@
 - [x] SQLite connection string added to `appsettings.json`, DbContext registered in `Program.cs`
 - [x] Initial migration created & applied (`finlo.db` exists)
 - [x] EF Core entity configurations created (`BudgetConfiguration`, `CategoryConfiguration`, `TransactionConfiguration`)
-- [x] Application layer folder structure created (`Dtos/`, `Interfaces/`, `Services/`, `Repositories/` — empty)
-- [x] Infrastructure layer folder structure created (`Data/`, `Data/Configurations/`, `Seed/`, `Repositories/`)
-- [x] Generic repository pattern established (`IBaseRepository<T>` interface + `BaseRepository<T>` implementation)
-- [x] `ITransactionRepository` interface created (inherits `IBaseRepository<Transaction>`)
-- [x] `TransactionRepository` scaffolded (inherits `BaseRepository<Transaction>`, no custom query methods yet)
+- [x] Application layer folder structure: `DTOs/`, `Features/`, `Interfaces/`
+- [x] Infrastructure layer folder structure: `Data/`, `Data/Configurations/`, `Seed/`, `Repositories/`
+- [x] Generic repository pattern established (`IBaseRepository<TEntity, TKey>` interface + `BaseRepository<TEntity, TKey>` implementation)
+- [x] `ITransactionRepository` interface created (inherits `IBaseRepository` + `GetFilteredAsync` paginated/filtered query)
+- [x] `TransactionRepository` implemented (inherits `BaseRepository` + filtered query with pagination)
+- [x] Transaction DTOs created (`CreateTransactionDto`, `UpdateTransactionDto`, `TransactionResponseDto`)
+- [x] Pagination helpers created (`PaginationParams`, `PagedResult<T>` in `DTOs/Common/`)
+- [x] CQRS messaging interface started (`ICommand`, `ICommand<T>`, `IBaseCommand` in `Interfaces/Messaging/`)
+- [x] `CreateTransactionCommand` scaffolded in `Features/Transactions/Commands/`
 - [x] Frontend project scaffolded (`client/Finlo.UI` — Vite + React 19 + TypeScript)
 - [x] Frontend dependencies installed (axios, react-router-dom, zustand, recharts, tailwindcss + @tailwindcss/vite)
 - [x] Database seeded with 8 default categories via EF Core `HasData` + migration
 - [x] Docker setup complete (API + UI Dockerfiles, docker-compose, nginx, `.dockerignore`)
 - [x] CLI tool created (`Tools/finlo.ps1` — start/stop/reset/logs/migrate/seed-db)
+
+### Needs Attention
+
+- [ ] MediatR package not yet installed (referenced in `ICommand.cs` but no `PackageReference` in any `.csproj`)
+- [ ] `ICommand.cs` references `Finlo.Domain.Primitives.Result` but `Primitives/` folder is empty — needs `Result.cs` + `Error.cs`
+- [ ] `ICommandHandler`, `IQuery`, `IQueryHandler` interfaces not yet created in `Interfaces/Messaging/`
 - [ ] Everything below
 
 ---
@@ -72,15 +83,26 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 
 ### Tasks — Backend
 
-- [ ] Create DTOs in `Finlo.Application/DTOs/Transactions/`: `CreateTransactionDto`, `UpdateTransactionDto`, `TransactionResponseDto`
-- [ ] Create `PaginationParams` and `PagedResult<T>` in `Finlo.Application/DTOs/Common/`
-- [x] Create `ITransactionRepository` interface in `Finlo.Application/Interfaces/` _(created — inherits `IBaseRepository`, needs custom filtered query methods)_
-- [ ] Add filtered query methods to `ITransactionRepository` (paginated list with filters)
-- [x] Create `TransactionRepository` in `Finlo.Infrastructure/Repositories/` _(scaffolded — inherits `BaseRepository`, needs CRUD + filtered query implementation)_
-- [ ] Implement filtered query methods in `TransactionRepository`
-- [ ] Create `TransactionService` in `Finlo.Application/Services/` (mapping + validation)
-- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Transaction/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`) _(`Create.cs` exists as stub — needs real implementation; others missing)_
-- [ ] Register services in DI in `Finlo.Api/Program.cs` (repositories + services)
+**DTOs & Common**
+- [x] Create DTOs in `Finlo.Application/DTOs/Transactions/`: `CreateTransactionDto`, `UpdateTransactionDto`, `TransactionResponseDto`
+- [x] Create `PaginationParams` and `PagedResult<T>` in `Finlo.Application/DTOs/Common/`
+
+**Repository Layer**
+- [x] Create `ITransactionRepository` interface in `Finlo.Application/Interfaces/Transactions/` _(inherits `IBaseRepository` + `GetFilteredAsync`)_
+- [x] Create `TransactionRepository` in `Finlo.Infrastructure/Repositories/Transactions/` _(inherits `BaseRepository` + filtered query implemented)_
+
+**CQRS — Commands** (`Finlo.Application/Features/Transactions/Commands/`)
+- [ ] `CreateTransaction/` — `CreateTransactionCommand`, `CreateTransactionHandler`
+- [ ] `UpdateTransaction/` — `UpdateTransactionCommand`, `UpdateTransactionHandler`
+- [ ] `DeleteTransaction/` — `DeleteTransactionCommand`, `DeleteTransactionHandler`
+
+**CQRS — Queries** (`Finlo.Application/Features/Transactions/Queries/`)
+- [ ] `GetAllTransactions/` — `GetAllTransactionsQuery`, `GetAllTransactionsHandler` (paginated + filtered)
+- [ ] `GetTransactionById/` — `GetTransactionByIdQuery`, `GetTransactionByIdHandler`
+
+**API Endpoints**
+- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Transaction/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`, delegates to command/query handlers) _(`Create.cs` exists as stub)_
+- [ ] Register handlers + repositories in DI in `Finlo.Api/Program.cs`
 - [ ] Test all endpoints manually (use `.http` file or Swagger)
 
 ### Tasks — Frontend
@@ -136,12 +158,26 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 
 ### Tasks — Backend
 
+**DTOs**
 - [ ] Create DTOs in `Finlo.Application/DTOs/Budgets/`: `CreateBudgetDto`, `UpdateBudgetDto`, `BudgetResponseDto`, `BudgetSummaryDto`
-- [ ] Create `IBudgetRepository` interface in `Finlo.Application/Interfaces/`
-- [ ] Create `BudgetRepository` in `Finlo.Infrastructure/Repositories/`
-- [ ] Create `BudgetService` in `Finlo.Application/Services/` (includes summary calculation — queries Transactions via repository)
+
+**Repository Layer**
+- [ ] Create `IBudgetRepository` interface in `Finlo.Application/Interfaces/Budgets/`
+- [ ] Create `BudgetRepository` in `Finlo.Infrastructure/Repositories/Budgets/`
+
+**CQRS — Commands** (`Finlo.Application/Features/Budgets/Commands/`)
+- [ ] `CreateBudget/` — `CreateBudgetCommand`, `CreateBudgetHandler`
+- [ ] `UpdateBudget/` — `UpdateBudgetCommand`, `UpdateBudgetHandler`
+- [ ] `DeleteBudget/` — `DeleteBudgetCommand`, `DeleteBudgetHandler`
+
+**CQRS — Queries** (`Finlo.Application/Features/Budgets/Queries/`)
+- [ ] `GetAllBudgets/` — `GetAllBudgetsQuery`, `GetAllBudgetsHandler` (filter by month/year)
+- [ ] `GetBudgetById/` — `GetBudgetByIdQuery`, `GetBudgetByIdHandler`
+- [ ] `GetBudgetSummary/` — `GetBudgetSummaryQuery`, `GetBudgetSummaryHandler` (budget vs actual calculation)
+
+**API Endpoints**
 - [ ] Create endpoint classes in `Finlo.Api/Endpoints/Budget/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete`, `GetSummary` — each implements `IEndpoint`)
-- [ ] Register services in DI in `Finlo.Api/Program.cs`
+- [ ] Register handlers + repositories in DI in `Finlo.Api/Program.cs`
 - [ ] Test all endpoints
 
 ### Tasks — Frontend
@@ -165,8 +201,14 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 
 ### Tasks
 
-- [ ] Create `ICategoryRepository` interface in `Finlo.Application/Interfaces/`
-- [ ] Create `CategoryRepository` in `Finlo.Infrastructure/Repositories/`
+**Repository Layer**
+- [ ] Create `ICategoryRepository` interface in `Finlo.Application/Interfaces/Categories/`
+- [ ] Create `CategoryRepository` in `Finlo.Infrastructure/Repositories/Categories/`
+
+**CQRS — Queries** (`Finlo.Application/Features/Categories/Queries/`)
+- [ ] `GetAllCategories/` — `GetAllCategoriesQuery`, `GetAllCategoriesHandler`
+
+**API Endpoints**
 - [ ] Create `GetAll` endpoint class in `Finlo.Api/Endpoints/Category/` (implements `IEndpoint`)
 - [ ] Test endpoint
 
@@ -228,10 +270,19 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 
 ### Tasks — Backend
 
+**DTOs**
 - [ ] Create `Finlo.Application/DTOs/Reports/` with response DTOs
-- [ ] Create `Finlo.Application/Interfaces/IReportRepository.cs`
-- [ ] Create `ReportService` in `Finlo.Application/Services/` (aggregate queries against Transactions)
-- [ ] Create `ReportRepository` in `Finlo.Infrastructure/Repositories/`
+
+**Repository Layer**
+- [ ] Create `IReportRepository` interface in `Finlo.Application/Interfaces/Reports/`
+- [ ] Create `ReportRepository` in `Finlo.Infrastructure/Repositories/Reports/`
+
+**CQRS — Queries** (`Finlo.Application/Features/Reports/Queries/`)
+- [ ] `GetMonthlySummary/` — `GetMonthlySummaryQuery`, `GetMonthlySummaryHandler`
+- [ ] `GetCategoryBreakdown/` — `GetCategoryBreakdownQuery`, `GetCategoryBreakdownHandler`
+- [ ] `GetTrends/` — `GetTrendsQuery`, `GetTrendsHandler`
+
+**API Endpoints**
 - [ ] Create endpoint classes in `Finlo.Api/Endpoints/Report/` (`MonthlySummary`, `CategoryBreakdown`, `Trends` — each implements `IEndpoint`)
 - [ ] Test all report endpoints with sample data
 
@@ -264,7 +315,7 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 
 ## Validation & Error Handling
 
-- Add `FluentValidation` or use Data Annotations on DTOs (in `Finlo.Application`)
+- Add `FluentValidation` validators per command (in `Finlo.Application/Features/{Module}/Commands/{Action}/`)
   - Amount > 0
   - Category required
   - Date required
@@ -283,7 +334,7 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 
 ### Tasks
 
-- [ ] Add `FluentValidation` or use Data Annotations on DTOs (in `Finlo.Application`)
+- [ ] Add `FluentValidation` validators per command in `Finlo.Application/Features/{Module}/Commands/`
 - [ ] Create global exception handler middleware in `Finlo.Api/Middleware/`
 - [ ] Return consistent error response shape
 
