@@ -27,8 +27,14 @@
 - [x] `TransactionRepository` implemented (inherits `BaseRepository` + filtered query with pagination)
 - [x] Transaction DTOs created (`CreateTransactionDto`, `UpdateTransactionDto`, `TransactionResponseDto`)
 - [x] Pagination helpers created (`PaginationParams`, `PagedResult<T>` in `DTOs/Common/`)
-- [x] CQRS messaging interface started (`ICommand`, `ICommand<T>`, `IBaseCommand` in `Interfaces/Messaging/`)
-- [x] `CreateTransactionCommand` scaffolded in `Features/Transactions/Commands/`
+- [x] CQRS messaging interfaces complete (`ICommand`, `ICommandHandler`, `IQuery`, `IQueryHandler` in `Interfaces/Messaging/`)
+- [x] MediatR 14.1.0 installed in `Finlo.Application`
+- [x] `Result` + `Error` primitives created in `Finlo.Domain/Primitives/`
+- [x] `ErrorType` enum created in `Finlo.Domain/Enums/`
+- [x] `CreateTransactionCommand` + `CreateTransactionCommandHandler` implemented
+- [x] `GetAllTransactionsQuery` + `GetAllTransactionsQueryHandler` implemented
+- [x] `GetTransactionByIdQuery` + `GetTransactionByIdQueryHandler` implemented
+- [x] API endpoints created: `CreateTransaction`, `GetAllTransactions`, `GetTransactionById`
 - [x] Frontend project scaffolded (`client/Finlo.UI` — Vite + React 19 + TypeScript)
 - [x] Frontend dependencies installed (axios, react-router-dom, zustand, recharts, tailwindcss + @tailwindcss/vite)
 - [x] Database seeded with 8 default categories via EF Core `HasData` + migration
@@ -37,10 +43,16 @@
 
 ### Needs Attention
 
-- [ ] MediatR package not yet installed (referenced in `ICommand.cs` but no `PackageReference` in any `.csproj`)
-- [ ] `ICommand.cs` references `Finlo.Domain.Primitives.Result` but `Primitives/` folder is empty — needs `Result.cs` + `Error.cs`
-- [ ] `ICommandHandler`, `IQuery`, `IQueryHandler` interfaces not yet created in `Interfaces/Messaging/`
-- [ ] Everything below
+- [x] ~~MediatR package not yet installed~~ → installed (`MediatR 14.1.0` in `Finlo.Application.csproj`)
+- [x] ~~`Primitives/` folder is empty~~ → `Result.cs` + `Error.cs` created
+- [x] ~~CQRS interfaces missing~~ → `ICommandHandler`, `IQuery`, `IQueryHandler` all created
+- [ ] **MediatR not registered in DI** — need `services.AddMediatR()` in `Program.cs` or `DependencyInjection.cs`
+- [ ] **`ITransactionRepository` not registered in DI** — need to map interface → `TransactionRepository`
+- [ ] **No `SaveChangesAsync` call** — `BaseRepository` modifies the context but never persists; needs Unit of Work or explicit save
+- [ ] **`GetAllTransactions` endpoint route** — uses `/transactions` instead of `/api/transactions`
+- [ ] **`GetTransactionById` endpoint route** — uses `/transactions/{id}` instead of `/api/transactions/{id}`
+- [ ] **`GetAllTransactions` endpoint binding** — tries to bind `GetAllTransactionsQuery` from query string; needs manual param extraction
+- [ ] Missing `UpdateTransaction` + `DeleteTransaction` commands, handlers, and endpoints
 
 ---
 
@@ -92,17 +104,27 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 - [x] Create `TransactionRepository` in `Finlo.Infrastructure/Repositories/Transactions/` _(inherits `BaseRepository` + filtered query implemented)_
 
 **CQRS — Commands** (`Finlo.Application/Features/Transactions/Commands/`)
-- [ ] `CreateTransaction/` — `CreateTransactionCommand`, `CreateTransactionHandler`
-- [ ] `UpdateTransaction/` — `UpdateTransactionCommand`, `UpdateTransactionHandler`
-- [ ] `DeleteTransaction/` — `DeleteTransactionCommand`, `DeleteTransactionHandler`
+- [x] `CreateTransaction/` — `CreateTransactionCommand`, `CreateTransactionCommandHandler`
+- [ ] `UpdateTransaction/` — `UpdateTransactionCommand`, `UpdateTransactionCommandHandler`
+- [ ] `DeleteTransaction/` — `DeleteTransactionCommand`, `DeleteTransactionCommandHandler`
 
 **CQRS — Queries** (`Finlo.Application/Features/Transactions/Queries/`)
-- [ ] `GetAllTransactions/` — `GetAllTransactionsQuery`, `GetAllTransactionsHandler` (paginated + filtered)
-- [ ] `GetTransactionById/` — `GetTransactionByIdQuery`, `GetTransactionByIdHandler`
+- [x] `GetAllTransactions/` — `GetAllTransactionsQuery`, `GetAllTransactionsQueryHandler` (paginated, not yet using filters)
+- [x] `GetTransactionById/` — `GetTransactionByIdQuery`, `GetTransactionByIdQueryHandler`
 
 **API Endpoints**
-- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Transaction/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`, delegates to command/query handlers) _(`Create.cs` exists as stub)_
-- [ ] Register handlers + repositories in DI in `Finlo.Api/Program.cs`
+- [x] `CreateTransaction.cs` — `POST /api/transactions` (working)
+- [x] `GetAllTransactions.cs` — exists but needs fixes (wrong route `/transactions`, bad query binding)
+- [x] `GetTransactionById.cs` — exists but needs fix (wrong route `/transactions/{id}`)
+- [ ] `UpdateTransaction.cs` — `PUT /api/transactions/{id}`
+- [ ] `DeleteTransaction.cs` — `DELETE /api/transactions/{id}`
+
+**DI & Infrastructure**
+- [ ] Register MediatR (`services.AddMediatR()`) in `Program.cs` or `DependencyInjection.cs`
+- [ ] Register `ITransactionRepository` → `TransactionRepository` in DI
+- [ ] Add `SaveChangesAsync` mechanism (Unit of Work or per-repository)
+- [ ] Fix `GetAllTransactions` endpoint (route prefix + query param extraction)
+- [ ] Fix `GetTransactionById` endpoint (route prefix)
 - [ ] Test all endpoints manually (use `.http` file or Swagger)
 
 ### Tasks — Frontend
