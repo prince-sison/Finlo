@@ -58,8 +58,8 @@
 - [x] ~~`GetTransactionById` endpoint route~~ → fixed to `api/transactions/{id:guid}`
 - [x] ~~`GetAllTransactions` endpoint binding~~ → binds `PaginationParams` correctly
 - [x] ~~Missing `UpdateTransaction` command/handler~~ → `UpdateTransactionCommand` + handler created
-- [ ] Missing `DeleteTransaction` command, handler, and endpoint
-- [ ] Missing `UpdateTransaction` endpoint (`PUT /api/transactions/{id}`)
+- [x] ~~Missing `DeleteTransaction` command, handler, and endpoint~~ → implemented
+- [x] ~~Missing `UpdateTransaction` endpoint (`PUT /api/transactions/{id}`)~~ → implemented
 - [ ] No CORS configuration for local frontend dev
 - [ ] Tailwind CSS installed but not wired (Vite plugin not configured, no directives in CSS)
 
@@ -115,7 +115,7 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 **CQRS — Commands** (`Finlo.Application/Features/Transactions/Commands/`)
 - [x] `CreateTransaction/` — `CreateTransactionCommand`, `CreateTransactionCommandHandler`
 - [x] `UpdateTransaction/` — `UpdateTransactionCommand`, `UpdateTransactionCommandHandler`
-- [ ] `DeleteTransaction/` — `DeleteTransactionCommand`, `DeleteTransactionCommandHandler`
+- [x] `DeleteTransaction/` — `DeleteTransactionCommand`, `DeleteTransactionCommandHandler`
 
 **CQRS — Queries** (`Finlo.Application/Features/Transactions/Queries/`)
 - [x] `GetAllTransactions/` — `GetAllTransactionsQuery`, `GetAllTransactionsQueryHandler` (paginated, not yet using filters)
@@ -125,8 +125,8 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 - [x] `CreateTransaction.cs` — `POST /api/transactions` (working)
 - [x] `GetAllTransactions.cs` — `GET /api/transactions` (working, paginated)
 - [x] `GetTransactionById.cs` — `GET /api/transactions/{id:guid}` (working)
-- [ ] `UpdateTransaction.cs` — `PUT /api/transactions/{id}`
-- [ ] `DeleteTransaction.cs` — `DELETE /api/transactions/{id}`
+- [x] `UpdateTransaction.cs` — `PUT /api/transactions/{id}`
+- [x] `DeleteTransaction.cs` — `DELETE /api/transactions/{id}`
 
 **DI & Infrastructure**
 - [x] Register MediatR (`services.AddMediatR()`) via `AddApplication()` in `Finlo.Application/DependencyInjection.cs`
@@ -403,15 +403,15 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 
 ### Phase 1 — Backend API
 
-- [ ] `POST /api/transactions` — creates a transaction
-- [ ] `GET /api/transactions` — returns paginated list with filters
-- [ ] `PUT /api/transactions/{id}` — updates correctly
-- [ ] `DELETE /api/transactions/{id}` — deletes correctly
+- [x] `POST /api/transactions` — creates a transaction
+- [x] `GET /api/transactions` — returns paginated list with filters
+- [x] `PUT /api/transactions/{id}` — updates correctly
+- [x] `DELETE /api/transactions/{id}` — deletes correctly
 - [ ] `POST /api/budgets` — creates a budget
 - [ ] `GET /api/budgets/summary?month=3&year=2026` — returns budget vs actual
 - [ ] `GET /api/categories` — returns seeded categories
 - [ ] Invalid requests return proper 400 errors
-- [ ] SQLite database file (`finlo.db`) is created and persists data
+- [x] SQLite database file (`finlo.db`) is created and persists data
 
 ### Phase 2 — Reports API
 
@@ -914,7 +914,7 @@ src/
 │   │       ├── Commands/
 │   │       │   ├── CreateTransaction/   ✅ done (command + handler)
 │   │       │   ├── UpdateTransaction/   ✅ done (command + handler)
-│   │       │   └── DeleteTransaction/   ❌ not created
+│   │       │   └── DeleteTransaction/   ✅ done (command + handler)
 │   │       └── Queries/
 │   │           ├── GetAllTransactions/  ✅ done (query + handler)
 │   │           └── GetTransactionById/  ✅ done (query + handler)
@@ -967,8 +967,8 @@ src/
     │   │   ├── CreateTransaction.cs   ✅ done — POST /api/transactions
     │   │   ├── GetAllTransactions.cs  ✅ done — GET /api/transactions
     │   │   ├── GetTransactionById.cs  ✅ done — GET /api/transactions/{id:guid}
-    │   │   ├── UpdateTransaction.cs   ❌ not created
-    │   │   └── DeleteTransaction.cs   ❌ not created
+    │   │   ├── UpdateTransaction.cs   ✅ done — PUT /api/transactions/{id}
+    │   │   └── DeleteTransaction.cs   ✅ done — DELETE /api/transactions/{id}
     │   ├── Budget/
     │   │   ├── Create.cs
     │   │   ├── GetAll.cs
@@ -1171,10 +1171,7 @@ This is the exact order to build, task by task:
  4. [Technical]      Database seeding (CategorySeedData + HasData + migration)  ✅ DONE
  5. [Technical]      Docker setup (Dockerfiles, compose, scripts)  ✅ DONE
  5b.[Technical]      .NET Aspire setup (AppHost + ServiceDefaults)  ✅ DONE
- 6. [Feature]        Transactions CRUD  🔧 IN PROGRESS
-                     ✅ DTOs, repo interface/impl, UnitOfWork, MediatR DI, CQRS handlers (Create, Update, GetAll, GetById)
-                     ✅ API endpoints: POST, GET list, GET by ID
-                     ❌ Remaining: DeleteTransaction command/handler/endpoint, UpdateTransaction endpoint
+ 6. [Feature]        Transactions CRUD  ✅ DONE
  7. [Feature]        Budgets CRUD + summary endpoint
  8. [Feature]        Categories endpoint
  9. [Feature]        Validation + error handling
@@ -1191,4 +1188,4 @@ This is the exact order to build, task by task:
 20. [Feature]        Advanced features
 ```
 
-**Next up: Step 6 — Finish Transactions CRUD (DeleteTransaction command/handler/endpoint + UpdateTransaction endpoint).**
+**Next up: Step 7 — Budgets CRUD + summary endpoint.**
