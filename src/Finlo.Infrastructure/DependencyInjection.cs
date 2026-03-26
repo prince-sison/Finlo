@@ -1,4 +1,9 @@
+using Finlo.Application.Interfaces;
+using Finlo.Application.Interfaces.Messaging;
+using Finlo.Application.Interfaces.Transactions;
 using Finlo.Infrastructure.Data;
+using Finlo.Infrastructure.Repositories;
+using Finlo.Infrastructure.Repositories.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +18,10 @@ public static class DependencyInjection
         {
             options.UseSqlite(configuration.GetConnectionString("DefaultConnection"));
         });
+
+        services.AddScoped<ITransactionRepository, TransactionRepository>();
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
     }

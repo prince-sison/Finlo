@@ -1,3 +1,4 @@
+using Finlo.Application.DTOs.Common;
 using Finlo.Application.Features.Transactions.Queries.GetAllTransactions;
 using MediatR;
 
@@ -7,9 +8,10 @@ public class GetAllTransactions : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapGet("/transactions", async (GetAllTransactionsQuery request, ISender sender) =>
+        app.MapGet("api/transactions", async ([AsParameters] PaginationParams paginationParams, ISender sender) =>
         {
-            var result = await sender.Send(request);
+            var query = new GetAllTransactionsQuery(paginationParams);
+            var result = await sender.Send(query);
             return Results.Ok(result);
         })
         .WithName("GetAllTransactions")

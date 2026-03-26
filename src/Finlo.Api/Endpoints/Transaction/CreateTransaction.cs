@@ -1,6 +1,7 @@
 using Finlo.Application.DTOs.Transactions;
 using Finlo.Application.Features.Transactions.Commands.CreateTransaction;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Finlo.Api.Endpoints.Transaction;
 
@@ -8,7 +9,7 @@ public class CreateTransaction : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/transactions", async (CreateTransactionDto request, ISender sender) =>
+        app.MapPost("api/transactions", async ([FromBody]CreateTransactionDto request, ISender sender) =>
         {
             var command = new CreateTransactionCommand(
                 request.Amount,
