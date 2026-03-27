@@ -8,6 +8,33 @@
 
 ---
 
+## Table of Contents
+
+### Part 1 — Feature Docs
+- [Transactions Module](#transactions-module)
+- [Budgets Module](#budgets-module)
+- [Categories Module](#categories-module)
+- [Reports Module](#reports-module)
+- [Dashboard](#dashboard)
+- [Validation & Error Handling](#validation--error-handling)
+- [Polish & Enhancements (Phase 4)](#polish--enhancements-phase-4)
+- [Advanced / Future (Phase 5)](#advanced--future-phase-5)
+- [Verification Checklists](#verification-checklists)
+
+### Part 2 — Technical Docs
+- [Dev Workflow](#dev-workflow)
+- [EF Core Commands Reference](#ef-core-commands-reference)
+- [Database Seeding](#database-seeding)
+- [Docker Setup](#docker-setup)
+- [Frontend Setup](#frontend-setup)
+- [API Response Conventions](#api-response-conventions)
+- [Git Branch Strategy](#git-branch-strategy)
+
+### Status
+- [Current State](#current-state)
+
+---
+
 ## Current State
 
 - [x] Solution created (`Finlo.slnx`) with all 6 projects registered
