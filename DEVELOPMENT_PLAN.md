@@ -72,6 +72,11 @@
 - [x] Docker setup complete (API + UI Dockerfiles, docker-compose, nginx, `.dockerignore`)
 - [x] CLI tool created (`Tools/finlo.ps1` — start/stop/reset/logs/migrate/seed-db)
 - [x] Aspire ServiceDefaults integrated (OpenTelemetry, health checks, service discovery, resilience)
+- [x] Budget DTOs created (`CreateBudgetDto`, `UpdateBudgetDto`, `BudgetResponseDto`, `BudgetSummaryDto`)
+- [x] `IBudgetRepository` interface created in `Finlo.Application/Interfaces/Budgets/`
+- [x] `BudgetRepository` implemented in `Finlo.Infrastructure/Repositories/Budgets/`
+- [x] `GetAllBudgetsQuery` + `GetAllBudgetsQueryHandler` implemented
+- [x] `GetBudgetByIdQuery` + `GetBudgetByIdQueryHandler` implemented
 
 ### Needs Attention
 
@@ -218,25 +223,26 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 ### Tasks — Backend
 
 **DTOs**
-- [ ] Create DTOs in `Finlo.Application/DTOs/Budgets/`: `CreateBudgetDto`, `UpdateBudgetDto`, `BudgetResponseDto`, `BudgetSummaryDto`
+- [x] Create DTOs in `Finlo.Application/DTOs/Budgets/`: `CreateBudgetDto`, `UpdateBudgetDto`, `BudgetResponseDto`, `BudgetSummaryDto`
 
 **Repository Layer**
-- [ ] Create `IBudgetRepository` interface in `Finlo.Application/Interfaces/Budgets/`
-- [ ] Create `BudgetRepository` in `Finlo.Infrastructure/Repositories/Budgets/`
+- [x] Create `IBudgetRepository` interface in `Finlo.Application/Interfaces/Budgets/`
+- [x] Create `BudgetRepository` in `Finlo.Infrastructure/Repositories/Budgets/`
 
 **CQRS — Commands** (`Finlo.Application/Features/Budgets/Commands/`)
-- [ ] `CreateBudget/` — `CreateBudgetCommand`, `CreateBudgetHandler`
-- [ ] `UpdateBudget/` — `UpdateBudgetCommand`, `UpdateBudgetHandler`
-- [ ] `DeleteBudget/` — `DeleteBudgetCommand`, `DeleteBudgetHandler`
+- [x] `CreateBudget/` — `CreateBudgetCommand`, `CreateBudgetHandler`
+- [x] `UpdateBudget/` — `UpdateBudgetCommand`, `UpdateBudgetHandler`
+- [x] `DeleteBudget/` — `DeleteBudgetCommand`, `DeleteBudgetHandler`
 
 **CQRS — Queries** (`Finlo.Application/Features/Budgets/Queries/`)
-- [ ] `GetAllBudgets/` — `GetAllBudgetsQuery`, `GetAllBudgetsHandler` (filter by month/year)
-- [ ] `GetBudgetById/` — `GetBudgetByIdQuery`, `GetBudgetByIdHandler`
-- [ ] `GetBudgetSummary/` — `GetBudgetSummaryQuery`, `GetBudgetSummaryHandler` (budget vs actual calculation)
+- [x] `GetAllBudgets/` — `GetAllBudgetsQuery`, `GetAllBudgetsHandler` (filter by month/year)
+- [x] `GetBudgetById/` — `GetBudgetByIdQuery`, `GetBudgetByIdHandler`
+- [x] `GetBudgetSummary/` — `GetBudgetSummaryQuery`, `GetBudgetSummaryHandler` (budget vs actual calculation)
 
 **API Endpoints**
-- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Budget/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete`, `GetSummary` — each implements `IEndpoint`)
-- [ ] Register handlers + repositories in DI in `Finlo.Api/Program.cs`
+- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Budget/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`)
+- [x] Create `GetSummary` endpoint in `Finlo.Api/Endpoints/Budget/`
+- [x] Register handlers + repositories in DI in `Finlo.Api/Program.cs`
 - [ ] Test all endpoints
 
 ### Tasks — Frontend
@@ -929,10 +935,10 @@ src/
 │   │   │   ├── UpdateTransactionDto.cs   ✅ done
 │   │   │   └── TransactionResponseDto.cs ✅ done
 │   │   ├── Budgets/
-│   │   │   ├── CreateBudgetDto.cs
-│   │   │   ├── UpdateBudgetDto.cs
-│   │   │   ├── BudgetResponseDto.cs
-│   │   │   └── BudgetSummaryDto.cs
+│   │   │   ├── CreateBudgetDto.cs         ✅ done
+│   │   │   ├── UpdateBudgetDto.cs         ✅ done
+│   │   │   ├── BudgetResponseDto.cs       ✅ done
+│   │   │   └── BudgetSummaryDto.cs        ✅ done
 │   │   └── Common/
 │   │       ├── PaginationParams.cs  ✅ done
 │   │       └── PagedResult.cs       ✅ done
@@ -950,7 +956,7 @@ src/
 │   │   ├── IUnitOfWork.cs            ✅ done (SaveChangesAsync contract)
 │   │   ├── Transactions/
 │   │   │   └── ITransactionRepository.cs  ✅ done (inherits IBaseRepository)
-│   │   ├── IBudgetRepository.cs
+│   │   ├── IBudgetRepository.cs          ✅ done
 │   │   ├── ICategoryRepository.cs
 │   │   └── Messaging/
 │   │       ├── ICommand.cs          ✅ done
@@ -973,8 +979,9 @@ src/
 │   │   ├── UnitOfWork.cs              ✅ done (wraps SaveChangesAsync)
 │   │   ├── Transactions/
 │   │   │   └── TransactionRepository.cs  ✅ done (GetAllAsync + GetFilteredAsync)
-│   │   ├── BudgetRepository.cs
-│   │   └── CategoryRepository.cs
+│   │   ├── Budgets/
+│   │   │   └── BudgetRepository.cs        ✅ done
+│   │   ├── CategoryRepository.cs
 │   └── Seed/
 │       └── CategorySeedData.cs  ✅ done (8 default categories)
 │

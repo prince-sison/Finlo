@@ -1,8 +1,9 @@
 using Finlo.Application.Interfaces;
-using Finlo.Application.Interfaces.Messaging;
+using Finlo.Application.Interfaces.Budgets;
 using Finlo.Application.Interfaces.Transactions;
 using Finlo.Infrastructure.Data;
 using Finlo.Infrastructure.Repositories;
+using Finlo.Infrastructure.Repositories.Budgets;
 using Finlo.Infrastructure.Repositories.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +21,7 @@ public static class DependencyInjection
         });
 
         services.AddScoped<ITransactionRepository, TransactionRepository>();
+        services.AddScoped<IBudgetRepository, BudgetRepository>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
