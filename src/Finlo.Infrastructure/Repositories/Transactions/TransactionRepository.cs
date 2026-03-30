@@ -16,27 +16,6 @@ public class TransactionRepository : BaseRepository<Transaction, Guid>, ITransac
         _context = context;
     }
 
-    public async Task<PagedResult<Transaction>> GetAllAsync(PaginationParams paginationParams, CancellationToken cancellationToken = default)
-    {
-        var query = _context.Transactions.AsQueryable();
-
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        var items = await query
-            .OrderByDescending(t => t.Date)
-            .Skip((paginationParams.PageNumber - 1) * paginationParams.PageSize)
-            .Take(paginationParams.PageSize)
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<Transaction>
-        {
-            Items = items,
-            TotalCount = totalCount,
-            PageNumber = paginationParams.PageNumber,
-            PageSize = paginationParams.PageSize
-        };
-    }
-
     public async Task<PagedResult<Transaction>> GetFilteredAsync(
         PaginationParams paginationParams,
         TransactionType? type = null,

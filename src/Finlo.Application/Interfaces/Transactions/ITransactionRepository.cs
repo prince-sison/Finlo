@@ -15,5 +15,5 @@ public interface ITransactionRepository : IBaseRepository<Transaction, Guid>
         string? search = null,
         CancellationToken cancellationToken = default);
     
-    Task<PagedResult<Transaction>> GetAllAsync(PaginationParams paginationParams, CancellationToken cancellationToken = default);
+
 }
