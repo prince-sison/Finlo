@@ -240,7 +240,7 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 - [x] `GetBudgetSummary/` — `GetBudgetSummaryQuery`, `GetBudgetSummaryHandler` (budget vs actual calculation)
 
 **API Endpoints**
-- [ ] Create endpoint classes in `Finlo.Api/Endpoints/Budget/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`)
+- [x] Create endpoint classes in `Finlo.Api/Endpoints/Budget/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`)
 - [x] Create `GetSummary` endpoint in `Finlo.Api/Endpoints/Budget/`
 - [x] Register handlers + repositories in DI in `Finlo.Api/Program.cs`
 - [ ] Test all endpoints
@@ -440,8 +440,8 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 - [x] `GET /api/transactions` — returns paginated list with filters
 - [x] `PUT /api/transactions/{id}` — updates correctly
 - [x] `DELETE /api/transactions/{id}` — deletes correctly
-- [ ] `POST /api/budgets` — creates a budget
-- [ ] `GET /api/budgets/summary?month=3&year=2026` — returns budget vs actual
+- [x] `POST /api/budgets` — creates a budget
+- [x] `GET /api/budgets/summary?month=3&year=2026` — returns budget vs actual
 - [ ] `GET /api/categories` — returns seeded categories
 - [ ] Invalid requests return proper 400 errors
 - [x] SQLite database file (`finlo.db`) is created and persists data

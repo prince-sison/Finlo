@@ -26,7 +26,7 @@ internal sealed class GetBudgetSummaryQueryHandler : IQueryHandler<GetBudgetSumm
         var endDate = startDate.AddMonths(1).AddTicks(-1);
 
         var expenseTransactions = await _transactionRepository.GetFilteredAsync(
-            new DTOs.Common.PaginationParams { PageNumber = 1, PageSize = int.MaxValue },
+            request.PaginationParams,
             type: TransactionType.Expense,
             startDate: startDate,
             endDate: endDate,

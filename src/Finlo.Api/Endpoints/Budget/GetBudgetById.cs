@@ -1,16 +1,16 @@
-using Finlo.Application.DTOs.Common;
-using Finlo.Application.Features.Budgets.Queries.GetBudgetSummary;
+using Finlo.Application.Features.Budgets.Queries.GetBudgetById;
 using MediatR;
 
 namespace Finlo.Api.Endpoints.Budget;
 
-public class GetBudgetSummary : IEndpoint
+public class GetBudgetById : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/budgets/summary", async ([AsParameters] PaginationParams paginationParams, int month, int year, ISender sender) =>
+        app.MapGet("api/budgets/{id:guid}", async (Guid id, ISender sender) =>
         {
-            var query = new GetBudgetSummaryQuery(paginationParams, month, year);
+            var query = new GetBudgetByIdQuery(id);
+
             var result = await sender.Send(query);
 
             if (result.IsFailure)
@@ -19,6 +19,6 @@ public class GetBudgetSummary : IEndpoint
             return Results.Ok(result.Value);
         })
         .WithTags("Budgets")
-        .WithName("GetBudgetSummary");
+        .WithName("GetBudgetById");
     }
 }
