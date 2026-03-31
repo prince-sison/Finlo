@@ -243,7 +243,7 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 - [x] Create endpoint classes in `Finlo.Api/Endpoints/Budget/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`)
 - [x] Create `GetSummary` endpoint in `Finlo.Api/Endpoints/Budget/`
 - [x] Register handlers + repositories in DI in `Finlo.Api/Program.cs`
-- [ ] Test all endpoints
+- [x] Test all endpoints
 
 ### Tasks — Frontend
 
@@ -267,15 +267,15 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 ### Tasks
 
 **Repository Layer**
-- [ ] Create `ICategoryRepository` interface in `Finlo.Application/Interfaces/Categories/`
-- [ ] Create `CategoryRepository` in `Finlo.Infrastructure/Repositories/Categories/`
+- [x] Create `ICategoryRepository` interface in `Finlo.Application/Interfaces/Categories/`
+- [x] Create `CategoryRepository` in `Finlo.Infrastructure/Repositories/Categories/`
 
 **CQRS — Queries** (`Finlo.Application/Features/Categories/Queries/`)
-- [ ] `GetAllCategories/` — `GetAllCategoriesQuery`, `GetAllCategoriesHandler`
+- [x] `GetAllCategories/` — `GetAllCategoriesQuery`, `GetAllCategoriesHandler`
 
 **API Endpoints**
-- [ ] Create `GetAll` endpoint class in `Finlo.Api/Endpoints/Category/` (implements `IEndpoint`)
-- [ ] Test endpoint
+- [x] Create `GetAll` endpoint class in `Finlo.Api/Endpoints/Category/` (implements `IEndpoint`)
+- [x] Test endpoint
 
 ---
 
@@ -442,7 +442,7 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 - [x] `DELETE /api/transactions/{id}` — deletes correctly
 - [x] `POST /api/budgets` — creates a budget
 - [x] `GET /api/budgets/summary?month=3&year=2026` — returns budget vs actual
-- [ ] `GET /api/categories` — returns seeded categories
+- [x] `GET /api/categories` — returns seeded categories
 - [ ] Invalid requests return proper 400 errors
 - [x] SQLite database file (`finlo.db`) is created and persists data
 
@@ -842,12 +842,12 @@ npm install -D tailwindcss @tailwindcss/vite
 
 - [x] Scaffold Vite + React + TS project (`client/Finlo.UI/`)
 - [x] Install dependencies (axios, router, zustand, recharts, tailwind)
-- [ ] Set up Tailwind CSS (wire Vite plugin in `vite.config.ts`, add `@import "tailwindcss"` to CSS)
-- [ ] Create folder structure (`api/`, `features/`, `components/`, `store/`, `hooks/`, `types/`)
-- [ ] Create axios client with base URL pointing to API
-- [ ] Configure CORS on .NET API for local dev
-- [ ] Set up React Router with routes for all pages
-- [ ] Create `Layout` + `Sidebar` components
+- [x] Set up Tailwind CSS (wire Vite plugin in `vite.config.ts`, add `@import "tailwindcss"` to CSS)
+- [x] Create folder structure (`api/`, `features/`, `components/`, `store/`, `hooks/`, `types/`)
+- [x] Create axios client with base URL pointing to API
+- [x] Configure CORS on .NET API for local dev
+- [x] Set up React Router with routes for all pages
+- [x] Create `Layout` + `Sidebar` components
 
 ---
 
@@ -1174,9 +1174,9 @@ public enum TransactionType
 - [x] Create initial migration: `InitialCreate` (tables: Budgets, Categories, Transactions)
 - [x] Apply migration (`finlo.db` database file created)
 - [x] Create entity configurations (`BudgetConfiguration`, `CategoryConfiguration`, `TransactionConfiguration` in `Data/Configurations/`)
-- [ ] Add indexes to configurations: `Date` + `Category` on Transactions, composite `(Month, Year)` on Budgets
+- [x] Add indexes to configurations: `Date` + `Category` on Transactions, composite `(Month, Year)` on Budgets
 - [x] Implement seed data via EF Core `HasData` in `CategoryConfiguration` — see [Database Seeding](#database-seeding)
-- [ ] Create new migration to apply configuration changes (indexes, seed data, max lengths, column types) to database
+- [x] Create new migration to apply configuration changes (indexes, seed data, max lengths, column types) to database
 
 ---
 
