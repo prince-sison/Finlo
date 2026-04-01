@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Finlo.Application\Finlo.Application.csproj" />
     <ProjectReference Include="..\Finlo.Infrastructure\Finlo.Infrastructure.csproj" />
+    <ProjectReference Include="..\Finlo.ServiceDefaults\Finlo.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>
