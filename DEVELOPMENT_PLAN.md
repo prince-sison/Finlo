@@ -243,7 +243,7 @@ What the app does: modules, endpoints, UI pages, and roadmap.
 - [x] Create endpoint classes in `Finlo.Api/Endpoints/Budget/` (`Create`, `GetAll`, `GetById`, `Update`, `Delete` — each implements `IEndpoint`)
 - [x] Create `GetSummary` endpoint in `Finlo.Api/Endpoints/Budget/`
 - [x] Register handlers + repositories in DI in `Finlo.Api/Program.cs`
-- [x] Test all endpoints
+- [ ] Test all endpoints
 
 ### Tasks — Frontend
 
@@ -275,7 +275,7 @@ Simple read-only endpoint returning seeded categories. No full CRUD needed for V
 
 **API Endpoints**
 - [x] Create `GetAll` endpoint class in `Finlo.Api/Endpoints/Category/` (implements `IEndpoint`)
-- [x] Test endpoint
+- [ ] Test endpoint
 
 ---
 
